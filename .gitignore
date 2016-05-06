@@ -1,0 +1,8 @@
+target
+build
+out
+classes
+.idea
+local.properties
+.vagrant
+dependency-reduced-pom.xml
