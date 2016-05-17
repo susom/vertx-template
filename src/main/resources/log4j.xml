@@ -32,10 +32,16 @@
   <category name="com.github.susom">
     <priority value="DEBUG"/>
   </category>
-  <category name="shaded">
+  <category name="com.github.susom.vertx.base.shaded">
+    <priority value="WARN"/>
+  </category>
+  <category name="shaded.com.github.susom.database">
     <priority value="WARN"/>
   </category>
   <category name="org.hsqldb">
+    <priority value="WARN"/>
+  </category>
+  <category name="io.vertx.ext.auth.jwt.impl.JWT">
     <priority value="WARN"/>
   </category>
   <root>
