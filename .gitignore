@@ -3,6 +3,7 @@ build
 out
 classes
 .idea
-local.properties
+local.*
+.hsql
 .vagrant
 dependency-reduced-pom.xml
