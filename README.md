@@ -40,3 +40,11 @@ You can combine the above to quickly reset and restart everything.
 ```
 rm -rf .hsql ; mvn -DskipTests clean package ; java -jar target/vertx-*-SNAPSHOT.jar create-database run
 ```
+
+Before you commit your changes, run the static analysis checks. This will
+make sure code is formatted correctly and doesn't contain certain kinds of
+errors and security vulnerabilities.
+
+```
+mvn -Pchecks clean verify
+```
