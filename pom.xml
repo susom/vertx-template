@@ -74,6 +74,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
 
   <distributionManagement>
@@ -291,6 +292,33 @@
               <javacParams>-Alint -AprintErrorStack -Astubs=${com.github.susom:database:jar}</javacParams>
               <!--<javaParams>-Xdebug</javaParams>-->
             </configuration>
+          </plugin>
+          <plugin>
+            <groupId>de.thetaphi</groupId>
+            <artifactId>forbiddenapis</artifactId>
+            <version>2.1</version>
+            <configuration>
+              <failOnUnsupportedJava>true</failOnUnsupportedJava>
+              <bundledSignatures>
+                <bundledSignature>jdk-unsafe</bundledSignature>
+                <bundledSignature>jdk-deprecated</bundledSignature>
+                <bundledSignature>jdk-internal</bundledSignature>
+                <bundledSignature>jdk-non-portable</bundledSignature>
+                <!--<bundledSignature>jdk-system-out</bundledSignature>-->
+                <bundledSignature>jdk-reflection</bundledSignature>
+              </bundledSignatures>
+              <signaturesFiles>
+                <signaturesFile>forbidden-apis.txt</signaturesFile>
+              </signaturesFiles>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                  <goal>testCheck</goal>
+                </goals>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>
