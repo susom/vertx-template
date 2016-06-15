@@ -3,7 +3,12 @@ Getting Started
 
 #### What You Need
 
-Java 8 and Maven 3.
+[Java 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
+and [Maven 3](https://maven.apache.org/).
+
+Some of the libraries referenced by this project are currently private to
+IRT, so you will need to have Maven configured to use our internal repository
+(see https://medwiki.stanford.edu/display/kbase/Maven).
 
 #### Run Locally
 
