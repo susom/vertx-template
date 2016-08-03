@@ -7,3 +7,4 @@ local.*
 .hsql
 .vagrant
 dependency-reduced-pom.xml
+.vertx
