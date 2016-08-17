@@ -59,6 +59,8 @@
             <include class="com.github.susom.vertx.base.**"/>
             <include class="io.vertx.**"/>
             <include class="io.netty.handler.codec.http.**"/>
+            <include class="java.nio.file.**"/>
+            <include class="sun.security.tools.keytool.Main"/>
           </to>
         </allow>
       </deny>
