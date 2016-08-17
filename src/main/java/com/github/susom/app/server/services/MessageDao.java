@@ -32,8 +32,7 @@ public class MessageDao {
   }
 
   public void addMessage(String message) {
-    dbs.get().toInsert("insert into app_message (app_message_id, message)"
-        + " values (?,?)")
+    dbs.get().toInsert("insert into app_message (app_message_id, message) values (?,?)")
         .argPkSeq("app_pk_seq").argString(message).insert(1);
   }
 

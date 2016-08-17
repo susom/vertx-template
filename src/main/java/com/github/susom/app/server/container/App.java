@@ -1,16 +1,17 @@
 /*
  * Copyright 2016 The Board of Trustees of The Leland Stanford Junior University.
- * All Rights Reserved.
  *
- * See the NOTICE and LICENSE files distributed with this work for information
- * regarding copyright ownership and licensing. You may not use this file except
- * in compliance with a written license agreement with Stanford University.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See your
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.github.susom.app.server.container;
 
@@ -48,8 +49,10 @@ public class App {
     this.config = config;
   }
 
-  public Router router(Vertx vertx) {
+  public String addContext(Vertx vertx, Router root) {
+    String context = '/' + config.getString("app.web.context", "app");
     Router router = Router.router(vertx);
+    root.mountSubRouter(context, router);
 
     // ***
     // *** Be careful with this method! This is very security critical code!
@@ -61,7 +64,7 @@ public class App {
     // but is optional at this point (upgraded to required below)
     router.route().handler(CookieHandler.create());
     router.route().handler(WebAppJwtAuthHandler.optional(jwt));
-    router.route().handler(new MetricsHandler(random, config.getBooleanOrFalse("log.full.requests")));
+    router.route().handler(new MetricsHandler(random, config.getBooleanOrFalse("insecure.log.full.requests")));
 
     // A public API with no authentication or authorization required
     router.get("/public").handler(rc -> {
@@ -109,6 +112,6 @@ public class App {
 //        .rootIndex("mystudy.html")
 //    );
 
-    return router;
+    return context;
   }
 }

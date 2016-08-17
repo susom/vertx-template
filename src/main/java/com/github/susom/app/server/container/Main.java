@@ -1,119 +1,108 @@
 /*
  * Copyright 2016 The Board of Trustees of The Leland Stanford Junior University.
- * All Rights Reserved.
  *
- * See the NOTICE and LICENSE files distributed with this work for information
- * regarding copyright ownership and licensing. You may not use this file except
- * in compliance with a written license agreement with Stanford University.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See your
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.github.susom.app.server.container;
 
-import com.github.susom.app.server.services.CreateSchema;
-import com.github.susom.database.Config;
-import com.github.susom.database.DatabaseProviderVertx;
-import com.github.susom.database.DatabaseProviderVertx.Builder;
-import com.github.susom.dbgoodies.vertx.DatabaseHealthCheck;
-import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.jwt.JWTAuth;
-import io.vertx.ext.web.Router;
-import java.io.FilePermission;
-import java.net.SocketPermission;
-import java.security.SecureRandom;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import static com.github.susom.vertx.base.VertxBase.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.util.jar.Manifest;
 
 /**
  * This is the main entry point for the application, but is mostly
  * boilerplate for configuring and launching things.
  */
 public class Main {
-  private static final Logger log = LoggerFactory.getLogger(Main.class);
-
   public static void main(String[] args) {
     try {
-      // Configure SLF4J and capture System.out and System.err into the log
-      initializeLogging();
-      redirectConsoleToLog();
+      String myLocation = Main.class.getProtectionDomain().getCodeSource().getLocation().toString();
+      if (myLocation.endsWith(".jar")) {
+        Manifest manifest;
+        try (InputStream in = new URL("jar:" + myLocation + "!/META-INF/MANIFEST.MF").openStream()) {
+          manifest = new Manifest(in);
+        }
+        String appJar = manifest.getMainAttributes().getValue("App-Jar");
 
-      // Read local configuration needed to start the app. It is a good idea
-      // to keep these to a minimum, specifying only environment-dependent
-      // variables needed to bootstrap things. Other application configuration
-      // can be read from the database once the server is up.
-      String propertiesFile = System.getProperty("properties", "local.properties");
-      Config config = Config.from().systemProperties().propertyFile(propertiesFile.split(":")).get();
+        if (appJar == null) {
+          System.out.println("Launching in fatjar mode");
 
-      // Run the application inside the Java sandbox (like an Applet) to improve
-      // security. Even it an attacker managed to trick our code into doing a
-      // bad thing, the sandbox should prevent our code from being able to break
-      // out to expose the underlying operating system.
-      startSecurityManager(
-          // Our server must listen on a local port
-          new SocketPermission("localhost:8080", "listen,resolve"),
-          // If we need to connect to something like an email server
-//          new SocketPermission("smtp.stanford.edu:587", "connect");
-          // These two are for hsqldb to store its database files
-          new FilePermission(workDir() + "/.hsql", "read,write,delete"),
-          new FilePermission(workDir() + "/.hsql/-", "read,write,delete")
-      );
+          URLClassLoader cl = (URLClassLoader) Main.class.getClassLoader();
+          Thread.currentThread().setContextClassLoader(cl);
+          new SecurityPolicy(true).install();
+          new Server().launch(new String[0]);
+          return;
+        }
 
-      // Create the database schema if requested
-      Set<String> argSet = new HashSet<>(Arrays.asList(args));
-      if (argSet.contains("create-database")) {
-        CreateSchema.run(argSet, config);
-      }
+        // This is an experimental work in progress where we package as a set of embedded
+        // jars so we can better control various security manager policies
+        System.out.println("Launching in specialjar mode");
 
-      // Launch the server if requested
-      if (argSet.contains("run")) {
-        Vertx vertx = Vertx.vertx();
+        URL appJarUrl;
+        try (InputStream in = new URL("jar:" + myLocation + "!/" + appJar).openStream()) {
+          appJarUrl = extractJarToTempDir(in);
+        }
 
-        Builder db = DatabaseProviderVertx.pooledBuilder(vertx, config).withSqlParameterLogging();
+        // This is to work-around problems with dynamically calling Policy.setPolicy()
+        // as part of enabling SecurityManager sandboxing. If you load the application
+        // as a fat jar, the class loader starting Main will cache the current policy
+        // (none) when it initializes, which effectively disables security.
+        URLClassLoader system = (URLClassLoader) ClassLoader.getSystemClassLoader();
+//        URLClassLoader boot = (URLClassLoader) system.getParent();
+//        System.out.println("System: " + Arrays.asList(system.getURLs()));
+//        System.out.println("Boot: " + Arrays.asList(boot.getURLs()));
 
-        SecureRandom random = createSecureRandom(vertx);
+        ClassLoader serverClassLoader = new URLClassLoader(new URL[] { appJarUrl }, system);
+        ClassLoader client = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(serverClassLoader);
+        Class<?> serverClass = serverClassLoader.loadClass("com.github.susom.app.server.container.SecurityPolicy");
 
-        // Avoid using sessions by cryptographically signing tokens with JWT
-        // To create the private key do something like this:
-        // keytool -genseckey -keystore keystore.jceks -storetype jceks -storepass secret \
-        //         -keyalg HMacSHA256 -keysize 2048 -alias HS256 -keypass secret
-        // For more info: https://vertx.io/docs/vertx-auth-jwt/java/
-        JWTAuth jwt = JWTAuth.create(vertx, new JsonObject()
-            .put("keyStore", new JsonObject()
-                .put("type", "jceks")
-                .put("path", config.getString("jwt.keystore.path", "local.jwt.jceks"))
-                .put("password", config.getString("jwt.keystore.secret", "secret"))));
+        Object policy = serverClass.getConstructor(boolean.class).newInstance(false);
+        serverClass.getMethod("install").invoke(policy);
+        Thread.currentThread().setContextClassLoader(client);
 
-        // The meat of the application goes here
-        Router root = Router.router(vertx);
-        String context = '/' + config.getString("app.web.context", "app");
-        root.mountSubRouter(context, new App(db, random, jwt, config).router(vertx));
-        // TODO add active defense handler here in front of everything
-        // TODO add optional root redirect to app here?
+        serverClassLoader = new URLClassLoader(new URL[] { appJarUrl }, system);
+        Thread.currentThread().setContextClassLoader(serverClassLoader);
+        serverClass = serverClassLoader.loadClass("com.github.susom.app.server.container.Server");
+        Object server = serverClass.getConstructor(boolean.class).newInstance(false);
+        serverClass.getMethod("launch").invoke(server, new Object[] { new String[0] });
+        Thread.currentThread().setContextClassLoader(client);
+      } else {
+        System.out.println("Launching in IDE mode");
 
-        // Add status pages per DCS standards (JSON returned from /status and /status/app)
-        new DatabaseHealthCheck(vertx, db, config).addStatusHandlers(root);
-
-        // Start the server
-        vertx.createHttpServer().requestHandler(root::accept).listen(8080, result ->
-            log.info("Started server on port {}: http://localhost:8080{}", 8080, context)
-        );
-
-        // Make sure we cleanly shutdown Vert.x and the database pool
-        addShutdownHook(vertx, db::close);
+        new SecurityPolicy(true).install();
+        new Server().launch(new String[0]);
       }
     } catch (Exception e) {
-      log.error("Unexpected exception in main()", e);
+      e.printStackTrace();
       System.exit(1);
     }
+  }
+
+  private static URL extractJarToTempDir(InputStream jarStream) throws Exception {
+    File jar = Files.createTempFile("unpacked-app-", ".jar").toFile();
+    jar.deleteOnExit();
+    try (FileOutputStream out = new FileOutputStream(jar)) {
+      int bytesRead;
+      byte[] buf = new byte[4096];
+      while ((bytesRead = jarStream.read(buf)) != -1) {
+        out.write(buf, 0, bytesRead);
+      }
+    }
+    return jar.toURI().toURL();
   }
 }
