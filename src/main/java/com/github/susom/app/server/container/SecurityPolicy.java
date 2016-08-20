@@ -36,14 +36,7 @@ public class SecurityPolicy extends BasePolicy {
   // that hits a security manager permission.
   private final List<Permission> perms = new ArrayList<>();
 
-  /**
-   * @param devMode true if we are loading from the production build artifact
-   *                (the specially constructed fatjar); false if we are running
-   *                from an IDE with our classes on the main classpath
-   */
-  public SecurityPolicy(boolean devMode) throws Exception {
-    super(devMode);
-
+  public SecurityPolicy() throws Exception {
     String propertiesFile = System.getProperty("properties","conf/app.properties:local.properties:sample.properties");
     Config config = Config.from().systemProperties().propertyFile(propertiesFile.split(File.pathSeparator)).get();
 

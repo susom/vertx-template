@@ -41,10 +41,8 @@ public class Main {
         if (appJar == null) {
           System.out.println("Launching in fatjar mode");
 
-          URLClassLoader cl = (URLClassLoader) Main.class.getClassLoader();
-          Thread.currentThread().setContextClassLoader(cl);
-          new SecurityPolicy(true).install();
-          new Server().launch(new String[0]);
+          new SecurityPolicy().install();
+          new Server().launch(args);
           return;
         }
 
@@ -79,13 +77,13 @@ public class Main {
         Thread.currentThread().setContextClassLoader(serverClassLoader);
         serverClass = serverClassLoader.loadClass("com.github.susom.app.server.container.Server");
         Object server = serverClass.getConstructor(boolean.class).newInstance(false);
-        serverClass.getMethod("launch").invoke(server, new Object[] { new String[0] });
+        serverClass.getMethod("launch").invoke(server, new Object[] { args });
         Thread.currentThread().setContextClassLoader(client);
       } else {
         System.out.println("Launching in IDE mode");
 
-        new SecurityPolicy(true).install();
-        new Server().launch(new String[0]);
+        new SecurityPolicy().install();
+        new Server().launch(args);
       }
     } catch (Exception e) {
       e.printStackTrace();

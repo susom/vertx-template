@@ -19,6 +19,7 @@ import com.github.susom.app.server.services.MessageDao;
 import com.github.susom.app.server.services.MessageDao.Message;
 import com.github.susom.database.Config;
 import com.github.susom.database.DatabaseProviderVertx.Builder;
+import com.github.susom.vertx.base.BaseApp;
 import com.github.susom.vertx.base.MetricsHandler;
 import com.github.susom.vertx.base.Security;
 import com.github.susom.vertx.base.StrictResourceHandler;
@@ -33,8 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This is the main application, and will set up the various resources
- * that will be served.
+ * This defines all of the JSON APIs supported by the application.
  *
  * @author garricko
  */
@@ -52,52 +52,21 @@ public class SecureApp {
     this.config = config;
   }
 
-  public String addContext(Vertx vertx, Router root) {
-    String context = '/' + config.getString("secure-app.web.context", "secure-app");
-    Router router = Router.router(vertx);
-    root.mountSubRouter(context, router);
+  public void configureRouter(Vertx vertx, Router router) {
+    // Authentication handlers have already been configured at this point
 
-    // ***
-    // *** Be careful with this method! This is very security critical code!
-    // *** Your routes must be set up in the correct way and order to secure
-    // *** the resources and ensure proper authentication and authorization.
-    // ***
-
-    // Optimistically pick up logged in user here so logging and metrics will
-    // be correctly attributed whenever possible.
-    router.route().handler(security.authenticateOptional());
-    router.route().handler(new MetricsHandler(random, config.getBooleanOrFalse("insecure.log.full.requests")));
-
-    // Authentication callback and logout have to be accessible without authenticating
-    router.get("/callback").handler(security.callbackHandler());
-    router.get("/logout").handler(security.logoutHandler());
-
-    // Special case redirect for primary page. This will load a small HTML+JS
-    // page and execute some JavaScript to preserve the query string and bookmark
-    // before doing a client-side redirect.
-    router.get("/").handler(security.authenticateOrRedirectJs());
-
-    // Lock down everything else to return 401 with WWW-Authenticate: Redirect <login>
-    router.route().handler(security.authenticateOrDeny());
-
-    // Information for the client about whether we are logged in, how to login, etc.
-    router.get("/login-status").handler(security.loginStatusHandler());
-
-    // An API that is protected behind user authentication
-    // TODO add authorization check here
+    // Add your own APIs here with appropriate authorization checks
+    // To keep things clean, use a method reference and implement the API in a method below.
     router.get("/api/v1/secret").handler(this::secretApi).failureHandler(VertxBase::jsonApiFail);
 
-    // Static content coming from the Java classpath. Redirect to the
-    // login page if they haven't authenticated. This is last in this
-    // method because the routing path overlaps with the others above,
-    // and we want them to take precedence.
+    // Static content coming from the Java classpath. This is last in this
+    // method because the routing path overlaps with the others above, and
+    // we want them to take precedence.
     router.get("/*").handler(new StrictResourceHandler(vertx)
         .addDir("static/secure-app")
         .addDir("static/assets", "**/*", "assets")
         .rootIndex("index.nocache.html")
     );
-
-    return context;
   }
 
   // Place API handlers into separate methods to keep the above routing
