@@ -112,8 +112,7 @@ public class Server {
       vertx.createHttpServer(options).requestHandler(root::accept).listen(port, host, result -> {
         if (result.succeeded()) {
           int actualPort = result.result().actualPort();
-          log.info("Started server on port {}:\n    {}://localhost:{}{}?a=b%20b#c+c",
-              actualPort, proto, actualPort, context);
+          log.info("Started server on port {}: {}://localhost:{}/{}/?a=b#c", actualPort, proto, actualPort, context);
 
           // Make sure we cleanly shutdown Vert.x and the database pool on exit
           addShutdownHook(vertx, db::close);

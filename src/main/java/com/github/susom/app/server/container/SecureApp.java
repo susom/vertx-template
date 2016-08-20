@@ -19,8 +19,6 @@ import com.github.susom.app.server.services.MessageDao;
 import com.github.susom.app.server.services.MessageDao.Message;
 import com.github.susom.database.Config;
 import com.github.susom.database.DatabaseProviderVertx.Builder;
-import com.github.susom.vertx.base.BaseApp;
-import com.github.susom.vertx.base.MetricsHandler;
 import com.github.susom.vertx.base.Security;
 import com.github.susom.vertx.base.StrictResourceHandler;
 import com.github.susom.vertx.base.Valid;
