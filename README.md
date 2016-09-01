@@ -1,5 +1,22 @@
-Getting Started
-=========
+This is an opinionated way to build APIs and API-based web applications with a relational database as the primary data store.
+
+### Goals
+
+- Provide a production-quality template you can follow to build a web application
+  - Health checks, error handling, logging, performance, security, etc.
+- Secure by default, with support for advanced security features
+  - Centralized authentication
+  - Centralized coordination of active defense
+  - Runtime checks and reporting of library/platform vulnerabilities
+  - Fully leverage the Java security sandbox
+  - Pre-configure static source code analysis tools
+- Easy to set up and develop with
+  - Embedded HSQLDB database
+  - Embedded fake authentication and authorization
+  - Easy to Dockerize and deploy/manage
+- Keep as much of the infrastructure as possible in a library ([vertx-base](https://github.com/susom/vertx-base)) or Maven parent pom ([vertx-parent](https://github.com/susom/vertx-parent)) to simplify maintenance and security updates
+
+## Getting Started
 
 #### What You Need
 
