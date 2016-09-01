@@ -59,7 +59,6 @@ errors and security vulnerabilities. These are divided into two sets, only
 because certain of the tools are mutually incompatible.
 
 ```
-mvn -Pchecks clean verify
 mvn -DskipTests -Dcheck1 clean verify
 mvn -DskipTests -Dcheck2 clean verify
 ```
