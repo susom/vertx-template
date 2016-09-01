@@ -20,9 +20,9 @@ import com.github.susom.database.Config;
 import com.github.susom.database.DatabaseProviderVertx;
 import com.github.susom.database.DatabaseProviderVertx.Builder;
 import com.github.susom.dbgoodies.vertx.DatabaseHealthCheck;
+import com.github.susom.vertx.base.PortInfo;
 import com.github.susom.vertx.base.Security;
 import com.github.susom.vertx.base.SecurityImpl;
-import com.github.susom.vertx.base.VertxBase;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.net.JksOptions;
@@ -36,7 +36,6 @@ import java.util.HashSet;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import static com.github.susom.vertx.base.VertxBase.*;
 
@@ -64,10 +63,8 @@ public class Server {
     if (devMode) {
       log.warn("Running in development mode");
     }
-    String proto = config.getString("listen.proto", devMode ? "http" : "https");
-    int port = config.getInteger("listen.port", 8000);
-    String host = config.getString("listen.host", devMode ? "localhost" : "0.0.0.0");
-    String context = '/' + config.getString("listen.context", "home");
+    PortInfo listen = PortInfo.parseUrl(config.getString("listen.url", "http://0.0.0.0:8080"));
+    String context = '/' + config.getString("app.context", "home");
     boolean logFullRequests = config.getBooleanOrFalse("insecure.log.full.requests");
 
     enableSecurityManager();
@@ -86,7 +83,7 @@ public class Server {
       SecureRandom random = createSecureRandom(vertx);
       Builder db = DatabaseProviderVertx.pooledBuilder(vertx, config).withSqlParameterLogging();
       Router root = rootRouter(vertx, context);
-      Security security = new SecurityImpl(vertx, random, config::getString);
+      Security security = new SecurityImpl(vertx, root, random, config::getString);
 
       Router router = authenticatedRouter(vertx, random, security, logFullRequests);
       root.mountSubRouter(context, router);
@@ -97,27 +94,31 @@ public class Server {
 
       // Start the server
       HttpServerOptions options = new HttpServerOptions();
-      if (proto.equals("https")) {
-        String sslKeyType = config.getString("ssl.keystore.type", "pkcs12");
+      if (listen.proto().equals("https")) {
+//        String sslKeyType = config.getString("ssl.keystore.type", "pkcs12");
         String sslKeyPath = config.getString("ssl.keystore.path", "local.ssl.pkcs12");
         String sslKeyPassword = config.getString("ssl.keystore.password", "secret");
-        if (devMode && !Files.exists(Paths.get(sslKeyPath))) {
-          log.info("Dev mode: creating a self-signed keystore for SSL/TLS");
-          sun.security.tools.keytool.Main.main(new String[] { "-keystore", sslKeyPath,
-              "-storetype", sslKeyType, "-storepass", sslKeyPassword, "-genkey", "-keyalg", "RSA", "-validity",
-              "3650", "-alias", "self", "-dname", "CN=localhost, OU=ME, O=Mine, L=Here, ST=CA, C=US" });
-        }
+//        if (devMode && !Files.exists(Paths.get(sslKeyPath))) {
+//          log.info("Dev mode: creating a self-signed keystore for SSL/TLS");
+//          sun.security.tools.keytool.Main.main(new String[] { "-keystore", sslKeyPath,
+//              "-storetype", sslKeyType, "-storepass", sslKeyPassword, "-genkey", "-keyalg", "RSA", "-validity",
+//              "3650", "-alias", "self", "-dname", "CN=localhost, OU=ME, O=Mine, L=Here, ST=CA, C=US" });
+//        }
         options.setSsl(true).setKeyStoreOptions(new JksOptions().setPath(sslKeyPath).setPassword(sslKeyPassword));
       }
-      vertx.createHttpServer(options).requestHandler(root::accept).listen(port, host, result -> {
+      vertx.createHttpServer(options).requestHandler(root::accept).listen(listen.port(), listen.host(), result -> {
         if (result.succeeded()) {
           int actualPort = result.result().actualPort();
-          log.info("Started server on port {}: {}://localhost:{}/{}/?a=b#c", actualPort, proto, actualPort, context);
+          if (devMode) {
+            log.info("Started server on port {}: {}://localhost:{}{}/?a=b#c", actualPort, listen.proto(), actualPort, context);
+          } else {
+            log.info("Started server on port {}", actualPort);
+          }
 
           // Make sure we cleanly shutdown Vert.x and the database pool on exit
           addShutdownHook(vertx, db::close);
         } else {
-          log.error("Could not start server on port " + port, result.cause());
+          log.error("Could not start server on port " + listen.port(), result.cause());
 
           vertx.close();
           db.close();

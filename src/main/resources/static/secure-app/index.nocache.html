@@ -11,10 +11,8 @@
     .user-display-name {
       font-weight: bolder;
     }
-
     /* For the navbar to work */
     body {
-      min-height: 2000px;
       padding-top: 70px;
     }
   </style>
@@ -51,6 +49,7 @@
              aria-expanded="false"><span class="user-display-name"></span> <span class="caret"></span></a>
           <ul class="dropdown-menu">
             <li><a id="logoutButton" href="#">Logout</a></li>
+            <!-- TODO hard-coded account link -->
             <li><a id="accountButton" href="http://localhost:8080/auth/realms/demo/account">My Account</a></li>
           </ul>
         </li>

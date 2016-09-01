@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.github.susom</groupId>
+  <parent>
+    <groupId>com.github.susom</groupId>
+    <artifactId>vertx-parent</artifactId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+
   <artifactId>vertx-template</artifactId>
   <packaging>jar</packaging>
   <version>1.0-SNAPSHOT</version>
@@ -11,49 +18,41 @@
   <description>Sample Vert.x application.</description>
   <url>https://github.com/susom/vertx-template</url>
 
-  <dependencies>
-    <dependency>
-      <groupId>com.github.susom</groupId>
-      <artifactId>vertx-base</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>com.github.susom</groupId>
-      <artifactId>database-goodies</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>com.github.susom</groupId>
-      <artifactId>server-logging</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
+  <properties>
+    <main.class>com.github.susom.app.server.container.Main</main.class>
+  </properties>
 
-    <!-- TODO vertx-base embeds some Spring stuff that needs JCL -->
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>jcl-over-slf4j</artifactId>
-      <version>1.7.14</version>
-      <scope>runtime</scope>
-    </dependency>
+  <dependencies>
+    <!-- There are three profiles ("hsql" the default, "postgres", and "oracle")
+         that are normally used to control which database drivers get embedded
+         in our executable jar. If you want to always include a particular set,
+         uncomment them here.
     <dependency>
       <groupId>org.hsqldb</groupId>
       <artifactId>hsqldb</artifactId>
-      <version>2.3.2</version>
       <scope>runtime</scope>
     </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.oracle</groupId>
+      <artifactId>ojdbc7</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    -->
 
+    <!-- You get the latest JUnit and VertxUnit from the parent, but you
+         might want this one as well
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.12</version>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
+      <version>1.10.8</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-unit</artifactId>
-      <version>3.3.2</version>
-      <scope>test</scope>
-    </dependency>
+    -->
   </dependencies>
 
   <licenses>
@@ -79,12 +78,6 @@
     <tag>HEAD</tag>
   </scm>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <maven.compiler.target>1.8</maven.compiler.target>
-  </properties>
-
   <distributionManagement>
     <snapshotRepository>
       <id>ossrh</id>
@@ -99,234 +92,81 @@
   <build>
     <plugins>
       <plugin>
+        <!-- Unpack files from parent pom so later plugins can use them
+             (some plugins require actual files for config rather than
+             using resources) -->
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.3</version>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.10</version>
         <configuration>
-          <source>8</source>
-          <target>8</target>
-          <compilerId>javac-with-errorprone</compilerId>
-          <forceJavacCompilerUse>true</forceJavacCompilerUse>
-        </configuration>
-        <dependencies>
-          <dependency>
-            <groupId>org.codehaus.plexus</groupId>
-            <artifactId>plexus-compiler-javac-errorprone</artifactId>
-            <version>2.5</version>
-          </dependency>
-          <dependency>
-            <groupId>com.google.errorprone</groupId>
-            <artifactId>error_prone_core</artifactId>
-            <version>2.0.9</version>
-          </dependency>
-        </dependencies>
-      </plugin>
-      <plugin>
-        <!-- Macker enforces architectural constraints (static Java code dependencies) -->
-        <groupId>de.andrena.tools.macker</groupId>
-        <artifactId>macker-maven-plugin</artifactId>
-        <version>1.0.2</version>
-        <configuration>
-          <rule>macker-rules.xml</rule>
+          <outputDirectory>target/parent-files</outputDirectory>
+          <artifactItems>
+            <artifactItem>
+              <groupId>${project.parent.groupId}</groupId>
+              <artifactId>vertx-parent-file</artifactId>
+              <version>${project.parent.version}</version>
+            </artifactItem>
+          </artifactItems>
+          <includeArtifactIds>vertx-parent-files</includeArtifactIds>
         </configuration>
         <executions>
           <execution>
-            <phase>compile</phase>
+            <id>unpack-parent-files</id>
             <goals>
-              <goal>macker</goal>
+              <goal>unpack-dependencies</goal>
             </goals>
+            <phase>generate-resources</phase>
           </execution>
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>2.4.1</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <filters>
-                <filter>
-                  <artifact>*:*</artifact>
-                  <excludes>
-                    <exclude>META-INF/*.SF</exclude>
-                    <exclude>META-INF/*.DSA</exclude>
-                    <exclude>META-INF/*.RSA</exclude>
-                  </excludes>
-                </filter>
-              </filters>
-              <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>com.github.susom.app.server.container.Main</mainClass>
-                </transformer>
-              </transformers>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
+        <!-- Run unit tests matching **/*(^(Db|Oracle|Hsql|Postgres))Test-->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.18</version>
-        <configuration>
-          <redirectTestOutputToFile>true</redirectTestOutputToFile>
-        </configuration>
       </plugin>
       <plugin>
+        <!-- Run database/system tests matching **/*(Db|Oracle|Hsql|Postgres)Test-->
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>2.5</version>
-        <configuration>
-          <!-- To avoid overlapping classes warnings from shade plugin -->
-          <forceCreation>true</forceCreation>
-        </configuration>
-        <executions>
-          <execution>
-            <id>default-jar</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-            <phase>package</phase>
-          </execution>
-        </executions>
+        <artifactId>maven-failsafe-plugin</artifactId>
       </plugin>
       <plugin>
+        <!-- Create the combined executable jar -->
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-source-plugin</artifactId>
-        <version>2.2.1</version>
-        <executions>
-          <execution>
-            <id>attach-sources</id>
-            <goals>
-              <goal>jar-no-fork</goal>
-            </goals>
-            <configuration>
-              <includes>
-                <include>com/github/susom/**/*</include>
-              </includes>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <version>2.9.1</version>
-        <executions>
-          <execution>
-            <id>attach-javadocs</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-            <configuration>
-              <additionalparam>-Xdoclint:none</additionalparam>
-            </configuration>
-          </execution>
-        </executions>
+        <artifactId>maven-shade-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
 
   <profiles>
+    <!-- There are a number of profiles you get for free from the parent. For
+         database drivers and database specific integration tests:
+
+         -P hsql (default if no other profile is active)
+         -P postgres
+         -P oracle
+
+         Some code analysis tools are mutually incompatible, so those profiles
+         are grouped into two sets, enabled by system properties:
+
+         -Dcheck1 (a.k.a -Pcheck-errorprone,check-macker,check-forbidden,checkstyle)
+         -Dcheck2 (a.k.a -Pchecker)
+         -->
     <profile>
-      <id>checks</id>
+      <id>release</id>
       <build>
         <plugins>
-          <!-- Use checkstyle to verify basic source code formatting -->
+          <plugin>
+            <!-- Create deploy.zip with app and docker artifacts-->
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+          </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-checkstyle-plugin</artifactId>
-            <version>2.17</version>
-            <dependencies>
-              <dependency>
-                <groupId>com.puppycrawl.tools</groupId>
-                <artifactId>checkstyle</artifactId>
-                <version>6.18</version>
-              </dependency>
-            </dependencies>
-            <executions>
-              <execution>
-                <id>validate</id>
-                <phase>validate</phase>
-                <configuration>
-                  <!--<configLocation>google_checks.xml</configLocation>-->
-                  <configLocation>checkstyle.xml</configLocation>
-                  <encoding>UTF-8</encoding>
-                  <consoleOutput>true</consoleOutput>
-                  <failsOnError>true</failsOnError>
-                  <violationSeverity>warning</violationSeverity>
-                  <!--<suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>-->
-                </configuration>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-              </execution>
-            </executions>
+            <artifactId>maven-source-plugin</artifactId>
           </plugin>
-          <!-- Use the Checker Framework to statically verify absence of SQL injection security problems -->
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <version>2.3</version>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>properties</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.checkerframework</groupId>
-            <artifactId>checkerframework-maven-plugin</artifactId>
-            <version>1.8.2</version>
-            <executions>
-              <execution>
-                <phase>process-classes</phase>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-              </execution>
-            </executions>
-            <configuration>
-              <checkerFrameworkVersion>2.0.0</checkerFrameworkVersion>
-              <processors>
-                <processor>org.checkerframework.checker.tainting.TaintingChecker</processor>
-              </processors>
-              <javacParams>-Alint -AprintErrorStack -Astubs=${com.github.susom:database:jar}</javacParams>
-              <!--<javaParams>-Xdebug</javaParams>-->
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>de.thetaphi</groupId>
-            <artifactId>forbiddenapis</artifactId>
-            <version>2.1</version>
-            <configuration>
-              <failOnUnsupportedJava>true</failOnUnsupportedJava>
-              <bundledSignatures>
-                <bundledSignature>jdk-unsafe</bundledSignature>
-                <bundledSignature>jdk-deprecated</bundledSignature>
-                <bundledSignature>jdk-internal</bundledSignature>
-                <bundledSignature>jdk-non-portable</bundledSignature>
-                <!--<bundledSignature>jdk-system-out</bundledSignature>-->
-                <bundledSignature>jdk-reflection</bundledSignature>
-              </bundledSignatures>
-              <signaturesFiles>
-                <signaturesFile>forbidden-apis.txt</signaturesFile>
-              </signaturesFiles>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                  <goal>testCheck</goal>
-                </goals>
-              </execution>
-            </executions>
+            <artifactId>maven-javadoc-plugin</artifactId>
           </plugin>
         </plugins>
       </build>

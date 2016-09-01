@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
+  <appender name="FILE" class="org.apache.log4j.DailyRollingFileAppender">
+    <param name="File" value="/app/logs/app.log"/>
+    <param name="DatePattern" value="'.'yyyy-MM-dd"/>
+    <param name="Threshold" value="DEBUG"/>
+    <layout class="org.apache.log4j.SecurePatternLayout">
+      <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%t] %X{userId} %X{windowId} %X{requestId} %X{deviceRpid} %X{studyId} %c{2} %m%n"/>
+    </layout>
+    <!-- Filter out various internal polling (goes in separate file below) -->
+    <filter class="org.apache.log4j.filter.MDCMatchFilter">
+      <param name="KeyToMatch" value="userId"/>
+      <param name="ValueToMatch" value="&lt;health-check>"/>
+      <param name="ExactMatch" value="true"/>
+      <param name="chainPolicy" value="DenyOnMatch"/>
+    </filter>
+    <filter class="org.apache.log4j.filter.MDCMatchFilter">
+      <param name="KeyToMatch" value="userId"/>
+      <param name="ValueToMatch" value="&lt;polling>"/>
+      <param name="ExactMatch" value="true"/>
+      <param name="chainPolicy" value="DenyOnMatch"/>
+    </filter>
+  </appender>
+  <appender name="POLL_FILE" class="org.apache.log4j.DailyRollingFileAppender">
+    <param name="File" value="/app/logs/poll.log"/>
+    <param name="DatePattern" value="'.'yyyy-MM-dd"/>
+    <param name="Threshold" value="DEBUG"/>
+    <layout class="org.apache.log4j.SecurePatternLayout">
+      <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%t] %X{userId} %X{windowId} %X{requestId} %X{deviceRpid} %c{2} %m%n"/>
+    </layout>
+    <!-- Filter out everything except internal polling -->
+    <filter class="org.apache.log4j.filter.MDCMatchFilter">
+      <param name="KeyToMatch" value="userId"/>
+      <param name="ValueToMatch" value="&lt;health-check>"/>
+      <param name="ExactMatch" value="true"/>
+      <param name="chainPolicy" value="AcceptOnMatch"/>
+    </filter>
+    <filter class="org.apache.log4j.filter.MDCMatchFilter">
+      <param name="KeyToMatch" value="userId"/>
+      <param name="ValueToMatch" value="&lt;polling>"/>
+      <param name="ExactMatch" value="true"/>
+      <param name="chainPolicy" value="AcceptOnMatch"/>
+    </filter>
+    <filter class="org.apache.log4j.varia.DenyAllFilter"/>
+  </appender>
+  <category name="com.github.susom">
+    <priority value="DEBUG"/>
+  </category>
+  <root>
+    <priority value="WARN"/>
+    <appender-ref ref="FILE"/>
+    <appender-ref ref="POLL_FILE"/>
+  </root>
+</log4j:configuration>

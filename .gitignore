@@ -8,3 +8,10 @@ local.*
 .vagrant
 dependency-reduced-pom.xml
 .vertx
+*.jks
+*.jceks
+*.pkcs12
+*.pk12
+*.pem
+*.pfx
+.DS_Store

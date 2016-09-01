@@ -17,6 +17,7 @@ package com.github.susom.app.server.container;
 
 import com.github.susom.database.Config;
 import com.github.susom.vertx.base.BasePolicy;
+import com.github.susom.vertx.base.PortInfo;
 import java.io.File;
 import java.io.FilePermission;
 import java.net.SocketPermission;
@@ -41,15 +42,20 @@ public class SecurityPolicy extends BasePolicy {
     Config config = Config.from().systemProperties().propertyFile(propertiesFile.split(File.pathSeparator)).get();
 
     // Our server must listen on a local port
-    String host = config.getString("listen.host", "localhost");
-    String port = config.getString("listen.port", "8000");
-    perms.add(new SocketPermission(host + ":" + port, "listen,resolve"));
+    PortInfo listen = PortInfo.parseUrl(config.getString("listen.url", "http://localhost:8000"));
+    perms.add(new SocketPermission(listen.host() + ":" + listen.port(), "listen,resolve"));
+
+    // For fake security we need to act as a client to our own embedded authentication
+    if (config.getBooleanOrFalse("insecure.fake.security")) {
+      perms.add(new SocketPermission("localhost:" + listen.port(), "connect,resolve"));
+    }
 
     // Connecting to centralized authentication server
-    host = config.getString("auth.server.host");
-    port = config.getString("auth.server.port");
-    if (host != null && port != null) {
-      perms.add(new SocketPermission(host + ":" + port, "connect,resolve"));
+
+    String authServerUri = config.getString("auth.server.base.uri");
+    if (authServerUri != null) {
+      PortInfo authServer = PortInfo.parseUrl(authServerUri);
+      perms.add(new SocketPermission(authServer.host() + ":" + authServer.port(), "connect,resolve"));
     }
 
     // If we need to connect to something like an email server
