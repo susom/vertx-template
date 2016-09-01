@@ -28,6 +28,8 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.net.JksOptions;
 import io.vertx.ext.web.Router;
 import java.io.File;
+import java.io.FilePermission;
+import java.net.SocketPermission;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
@@ -54,8 +56,7 @@ public class Server {
     // to keep these to a minimum, specifying only environment-dependent
     // variables needed to bootstrap things. Other application configuration
     // can be read from the database once the server is up.
-    String properties = System.getProperty("properties", "conf/app.properties:local.properties:sample.properties");
-    Config config = Config.from().systemProperties().propertyFile(properties.split(File.pathSeparator)).get();
+    Config config = readConfig();
     log.info("Configuration is being loaded as follows:\n" + config.sources());
 
     // Coming soon...dev mode should start fake authentication, automatic reloading, etc.
@@ -125,5 +126,31 @@ public class Server {
         }
       });
     }
+  }
+
+  public Server installSecurityPolicy() throws Exception {
+    Config config = readConfig();
+    PortInfo listen = PortInfo.parseUrl(config.getString("listen.url", "http://localhost:8000"));
+    PortInfo authServer = PortInfo.parseUrl(config.getString("auth.server.base.uri"));
+    setSecurityPolicy(
+        // Our server must listen on a local port
+        new SocketPermission(listen.host() + ":" + listen.port(), "listen,resolve"),
+        // For fake security we need to act as a client to our own embedded authentication
+        config.getBooleanOrFalse("insecure.fake.security") ? new SocketPermission("localhost:" + listen.port(), "connect,resolve") : null,
+        // Connecting to centralized authentication server
+        authServer == null ? null : new SocketPermission(authServer.host() + ":" + authServer.port(), "connect,resolve"),
+        // These two are for hsqldb to store its database files
+        new FilePermission(workDir() + "/.hsql", "read,write,delete"),
+        new FilePermission(workDir() + "/.hsql/-", "read,write,delete"),
+        // TODO read these before sandboxing and deny permission later?
+//        new FilePermission(workDir + "/local.jwt.jceks", "read"),
+        new FilePermission(workDir() + "/local.ssl.jks", "read")
+    );
+    return this;
+  }
+
+  private Config readConfig() {
+    String properties = System.getProperty("properties", "conf/app.properties:local.properties:sample.properties");
+    return Config.from().systemProperties().propertyFile(properties.split(File.pathSeparator)).get();
   }
 }

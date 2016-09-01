@@ -2,6 +2,7 @@ target
 out
 classes
 .idea
+*.iml
 local.*
 .hsql
 .vagrant

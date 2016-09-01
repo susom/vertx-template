@@ -41,8 +41,7 @@ public class Main {
         if (appJar == null) {
           System.out.println("Launching in fatjar mode");
 
-          new SecurityPolicy().install();
-          new Server().launch(args);
+          new Server().installSecurityPolicy().launch(args);
           return;
         }
 
@@ -67,10 +66,10 @@ public class Main {
         ClassLoader serverClassLoader = new URLClassLoader(new URL[] { appJarUrl }, system);
         ClassLoader client = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(serverClassLoader);
-        Class<?> serverClass = serverClassLoader.loadClass("com.github.susom.app.server.container.SecurityPolicy");
+        Class<?> serverClass = serverClassLoader.loadClass("com.github.susom.app.server.container.Server");
 
         Object policy = serverClass.getConstructor(boolean.class).newInstance(false);
-        serverClass.getMethod("install").invoke(policy);
+        serverClass.getMethod("installSecurityManager").invoke(policy);
         Thread.currentThread().setContextClassLoader(client);
 
         serverClassLoader = new URLClassLoader(new URL[] { appJarUrl }, system);
@@ -78,12 +77,12 @@ public class Main {
         serverClass = serverClassLoader.loadClass("com.github.susom.app.server.container.Server");
         Object server = serverClass.getConstructor(boolean.class).newInstance(false);
         serverClass.getMethod("launch").invoke(server, new Object[] { args });
+        serverClass.getMethod("launch").invoke(policy, new Object[] { args });
         Thread.currentThread().setContextClassLoader(client);
       } else {
         System.out.println("Launching in IDE mode");
 
-        new SecurityPolicy().install();
-        new Server().launch(args);
+        new Server().installSecurityPolicy().launch(args);
       }
     } catch (Exception e) {
       e.printStackTrace();
