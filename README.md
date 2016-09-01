@@ -12,24 +12,31 @@ IRT, so you will need to have Maven configured to use our internal repository
 
 #### Run Locally
 
-Copy the default properties for development. The defaults will work with an
-embedded database. You will need to adjust them if you use a different database.
+Recommended steps for development:
+
+- Clone the repository
+- Drag the directory to IntelliJ
+- Run Main.java in the debugger
+
+The above steps should allow you to modify the HTML on the fly, and
+even some of the server code (the IntelliJ debugger reloads code on
+the fly for at least some cases).
+
+To adjust your configuration, copy the sample properties file rather
+than modifying it, so you won't accidentally commit your local changes.
+The default configuration uses an embedded HSQLDB database. You will
+need to adjust your local properties if you use a different database.
 
 ```
 cp sample.properties local.properties
 ```
 
-Create a private key for session key encryption with JWT.
-
-```
-keytool -genseckey -keystore local.jwt.jceks -storetype jceks -storepass secret \
-        -keyalg HMacSHA256 -keysize 2048 -alias HS256 -keypass secret
-```
+#### Maven Instructions
 
 Build everything, create the database schema, and start the server.
 
 ```
-mvn package
+mvn -DskipTests clean package
 java -jar target/vertx-*-SNAPSHOT.jar create-database
 java -jar target/vertx-*-SNAPSHOT.jar run
 ```
@@ -48,8 +55,11 @@ rm -rf .hsql ; mvn -DskipTests clean package ; java -jar target/vertx-*-SNAPSHOT
 
 Before you commit your changes, run the static analysis checks. This will
 make sure code is formatted correctly and doesn't contain certain kinds of
-errors and security vulnerabilities.
+errors and security vulnerabilities. These are divided into two sets, only
+because certain of the tools are mutually incompatible.
 
 ```
 mvn -Pchecks clean verify
+mvn -DskipTests -Dcheck1 clean verify
+mvn -DskipTests -Dcheck2 clean verify
 ```
