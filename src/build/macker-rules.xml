@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<!-- This file contains architectural constraints that will be enforced by the build.
+     For details on the syntax see http://innig.net/macker/guide/index.html -->
+<macker>
+  <ruleset name="Dependency Rules">
+    <pattern name="client-java">
+      <include class="java.lang.*"/>
+      <include class="java.util.*"/>
+      <include class="void"/>
+      <include class="int"/>
+      <include class="boolean"/>
+      <include class="long"/>
+      <include class="char"/>
+      <include class="byte"/>
+      <include class="double"/>
+      <include class="float"/>
+    </pattern>
+    <pattern name="server-java">
+      <include pattern="client-java"/>
+      <include class="java.beans.**"/>
+      <include class="java.io.**"/>
+      <include class="java.lang.**"/>
+      <include class="java.math.**"/>
+      <include class="java.net.**"/>
+      <include class="java.security.**"/>
+      <include class="java.text.**"/>
+      <include class="java.util.**"/>
+      <include class="java.time.**"/>
+      <include class="javax.activation.**"/>
+      <include class="javax.mail.**"/>
+      <include class="javax.inject.**"/>
+    </pattern>
+    <pattern name="server-libs">
+      <include class="org.slf4j.**"/>
+      <include class="com.github.susom.database.**"/>
+      <include class="com.github.susom.dbgoodies.**"/>
+    </pattern>
+
+    <access-rule>
+      <message>Server dependencies were violated</message>
+      <deny>
+        <from class="com.github.susom.app.server.services.**"/>
+        <allow>
+          <to>
+            <include class="com.github.susom.app.server.services.**"/>
+            <include pattern="server-java"/>
+            <include pattern="server-libs"/>
+          </to>
+        </allow>
+      </deny>
+      <deny>
+        <from class="com.github.susom.app.server.container.**"/>
+        <allow>
+          <to>
+            <include class="com.github.susom.app.server.container.**"/>
+            <include class="com.github.susom.app.server.services.**"/>
+            <include pattern="server-java"/>
+            <include pattern="server-libs"/>
+            <include class="com.github.susom.vertx.base.**"/>
+            <include class="io.vertx.**"/>
+            <include class="io.netty.handler.codec.http.**"/>
+            <include class="java.nio.file.**"/>
+            <include class="sun.security.tools.keytool.Main"/>
+          </to>
+        </allow>
+      </deny>
+    </access-rule>
+  </ruleset>
+</macker>
