@@ -15,91 +15,151 @@
  */
 package com.github.susom.app.server.container;
 
+import com.github.susom.app.server.services.CreateSchema;
+import com.github.susom.database.Config;
+import com.github.susom.database.DatabaseProviderVertx;
+import com.github.susom.database.DatabaseProviderVertx.Builder;
+import com.github.susom.dbgoodies.vertx.DatabaseHealthCheck;
+import com.github.susom.vertx.base.PortInfo;
+import com.github.susom.vertx.base.Security;
+import com.github.susom.vertx.base.SecurityImpl;
+import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.net.JksOptions;
+import io.vertx.ext.web.Router;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.URLClassLoader;
+import java.io.FilePermission;
+import java.net.SocketPermission;
 import java.nio.file.Files;
-import java.util.jar.Manifest;
+import java.nio.file.Paths;
+import java.security.SecureRandom;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static com.github.susom.vertx.base.VertxBase.*;
 
 /**
  * This is the main entry point for the application, but is mostly
  * boilerplate for configuring and launching things.
  */
 public class Main {
+  public void launch(String[] args) throws Exception {
+    // Configure SLF4J and capture System.out and System.err into the log
+    initializeLogging();
+    Logger log = LoggerFactory.getLogger(Main.class);
+    redirectConsoleToLog();
+
+    // Read local configuration needed to start the app. It is a good idea
+    // to keep these to a minimum, specifying only environment-dependent
+    // variables needed to bootstrap things. Other application configuration
+    // can be read from the database once the server is up.
+    Config config = readConfig();
+    log.info("Configuration is being loaded as follows:\n" + config.sources());
+
+    // Coming soon...dev mode should start fake authentication, automatic reloading, etc.
+    boolean devMode = config.getBooleanOrFalse("insecure.dev.mode");
+    if (devMode) {
+      log.warn("Running in development mode");
+    }
+    PortInfo listen = PortInfo.parseUrl(config.getString("listen.url", "http://0.0.0.0:8080"));
+    String context = '/' + config.getString("app.context", "home");
+    boolean logFullRequests = config.getBooleanOrFalse("insecure.log.full.requests");
+
+    enableSecurityManager();
+
+    // Create the database schema if requested or we are running hsql the first time
+    Set<String> argSet = new HashSet<>(Arrays.asList(args));
+    if (argSet.contains("create-database") || (devMode && !Files.exists(Paths.get(".hsql"))
+        && "jdbc:hsqldb:file:.hsql/db;shutdown=true".equals(config.getString("database.url")))) {
+      CreateSchema.run(argSet, config);
+    }
+    // TODO database upgrade checks
+
+    // Launch the server if requested
+    if (argSet.isEmpty() || argSet.contains("run")) {
+      Vertx vertx = Vertx.vertx();
+      SecureRandom random = createSecureRandom(vertx);
+      Builder db = DatabaseProviderVertx.pooledBuilder(vertx, config).withSqlParameterLogging();
+      Router root = rootRouter(vertx, context);
+      Security security = new SecurityImpl(vertx, root, random, config::getString);
+
+      Router router = authenticatedRouter(vertx, random, security, logFullRequests);
+      root.mountSubRouter(context, router);
+      new SecureApp(db, random, security, config).configureRouter(vertx, router);
+
+      // Add status pages per DCS standards (JSON returned from /status and /status/app)
+      new DatabaseHealthCheck(vertx, db, config).addStatusHandlers(root);
+
+      // Start the server
+      HttpServerOptions options = new HttpServerOptions();
+      if (listen.proto().equals("https")) {
+//        String sslKeyType = config.getString("ssl.keystore.type", "pkcs12");
+        String sslKeyPath = config.getString("ssl.keystore.path", "local.ssl.pkcs12");
+        String sslKeyPassword = config.getString("ssl.keystore.password", "secret");
+//        if (devMode && !Files.exists(Paths.get(sslKeyPath))) {
+//          log.info("Dev mode: creating a self-signed keystore for SSL/TLS");
+//          sun.security.tools.keytool.Main.main(new String[] { "-keystore", sslKeyPath,
+//              "-storetype", sslKeyType, "-storepass", sslKeyPassword, "-genkey", "-keyalg", "RSA", "-validity",
+//              "3650", "-alias", "self", "-dname", "CN=localhost, OU=ME, O=Mine, L=Here, ST=CA, C=US" });
+//        }
+        options.setSsl(true).setKeyStoreOptions(new JksOptions().setPath(sslKeyPath).setPassword(sslKeyPassword));
+      }
+      vertx.createHttpServer(options).requestHandler(root::accept).listen(listen.port(), listen.host(), result -> {
+        if (result.succeeded()) {
+          int actualPort = result.result().actualPort();
+          if (devMode) {
+            log.info("Started server on port {}: {}://localhost:{}{}/?a=b#c", actualPort, listen.proto(), actualPort, context);
+          } else {
+            log.info("Started server on port {}", actualPort);
+          }
+
+          // Make sure we cleanly shutdown Vert.x and the database pool on exit
+          addShutdownHook(vertx, db::close);
+        } else {
+          log.error("Could not start server on port " + listen.port(), result.cause());
+
+          vertx.close();
+          db.close();
+        }
+      });
+    }
+  }
+
+  public Main installSecurityPolicy() throws Exception {
+    Config config = readConfig();
+    PortInfo listen = PortInfo.parseUrl(config.getString("listen.url", "http://localhost:8000"));
+    PortInfo authServer = PortInfo.parseUrl(config.getString("auth.server.base.uri"));
+    setSecurityPolicy(
+        // Our server must listen on a local port
+        new SocketPermission(listen.host() + ":" + listen.port(), "listen,resolve"),
+        // For fake security we need to act as a client to our own embedded authentication
+        config.getBooleanOrFalse("insecure.fake.security") ? new SocketPermission("localhost:" + listen.port(), "connect,resolve") : null,
+        // Connecting to centralized authentication server
+        authServer == null ? null : new SocketPermission(authServer.host() + ":" + authServer.port(), "connect,resolve"),
+        // These two are for hsqldb to store its database files
+        new FilePermission(workDir() + "/.hsql", "read,write,delete"),
+        new FilePermission(workDir() + "/.hsql/-", "read,write,delete"),
+        // TODO read these before sandboxing and deny permission later?
+//        new FilePermission(workDir + "/local.jwt.jceks", "read"),
+        new FilePermission(workDir() + "/local.ssl.jks", "read")
+    );
+    return this;
+  }
+
+  private Config readConfig() {
+    String properties = System.getProperty("properties", "conf/app.properties:local.properties:sample.properties");
+    return Config.from().systemProperties().propertyFile(properties.split(File.pathSeparator)).get();
+  }
+
   public static void main(String[] args) {
     try {
-      String myLocation = Main.class.getProtectionDomain().getCodeSource().getLocation().toString();
-      if (myLocation.endsWith(".jar")) {
-        Manifest manifest;
-        try (InputStream in = new URL("jar:" + myLocation + "!/META-INF/MANIFEST.MF").openStream()) {
-          manifest = new Manifest(in);
-        }
-        String appJar = manifest.getMainAttributes().getValue("App-Jar");
-
-        if (appJar == null) {
-          System.out.println("Launching in fatjar mode");
-
-          new Server().installSecurityPolicy().launch(args);
-          return;
-        }
-
-        // This is an experimental work in progress where we package as a set of embedded
-        // jars so we can better control various security manager policies
-        System.out.println("Launching in specialjar mode");
-
-        URL appJarUrl;
-        try (InputStream in = new URL("jar:" + myLocation + "!/" + appJar).openStream()) {
-          appJarUrl = extractJarToTempDir(in);
-        }
-
-        // This is to work-around problems with dynamically calling Policy.setPolicy()
-        // as part of enabling SecurityManager sandboxing. If you load the application
-        // as a fat jar, the class loader starting Main will cache the current policy
-        // (none) when it initializes, which effectively disables security.
-        URLClassLoader system = (URLClassLoader) ClassLoader.getSystemClassLoader();
-//        URLClassLoader boot = (URLClassLoader) system.getParent();
-//        System.out.println("System: " + Arrays.asList(system.getURLs()));
-//        System.out.println("Boot: " + Arrays.asList(boot.getURLs()));
-
-        ClassLoader serverClassLoader = new URLClassLoader(new URL[] { appJarUrl }, system);
-        ClassLoader client = Thread.currentThread().getContextClassLoader();
-        Thread.currentThread().setContextClassLoader(serverClassLoader);
-        Class<?> serverClass = serverClassLoader.loadClass("com.github.susom.app.server.container.Server");
-
-        Object policy = serverClass.getConstructor(boolean.class).newInstance(false);
-        serverClass.getMethod("installSecurityManager").invoke(policy);
-        Thread.currentThread().setContextClassLoader(client);
-
-        serverClassLoader = new URLClassLoader(new URL[] { appJarUrl }, system);
-        Thread.currentThread().setContextClassLoader(serverClassLoader);
-        serverClass = serverClassLoader.loadClass("com.github.susom.app.server.container.Server");
-        Object server = serverClass.getConstructor(boolean.class).newInstance(false);
-        serverClass.getMethod("launch").invoke(server, new Object[] { args });
-        serverClass.getMethod("launch").invoke(policy, new Object[] { args });
-        Thread.currentThread().setContextClassLoader(client);
-      } else {
-        System.out.println("Launching in IDE mode");
-
-        new Server().installSecurityPolicy().launch(args);
-      }
+      new Main().installSecurityPolicy().launch(args);
     } catch (Exception e) {
       e.printStackTrace();
       System.exit(1);
     }
-  }
-
-  private static URL extractJarToTempDir(InputStream jarStream) throws Exception {
-    File jar = Files.createTempFile("unpacked-app-", ".jar").toFile();
-    jar.deleteOnExit();
-    try (FileOutputStream out = new FileOutputStream(jar)) {
-      int bytesRead;
-      byte[] buf = new byte[4096];
-      while ((bytesRead = jarStream.read(buf)) != -1) {
-        out.write(buf, 0, bytesRead);
-      }
-    }
-    return jar.toURI().toURL();
   }
 }
