@@ -148,8 +148,8 @@
          Some code analysis tools are mutually incompatible, so those profiles
          are grouped into two sets, enabled by system properties:
 
-         -Dcheck1 (a.k.a -Pcheck-errorprone,check-macker,check-forbidden,checkstyle)
-         -Dcheck2 (a.k.a -Pchecker)
+         -Dcheck1 (a.k.a. -Pcheck-errorprone,check-macker,check-forbidden,checkstyle)
+         -Dcheck2 (a.k.a. -Pchecker)
          -->
     <profile>
       <id>release</id>
