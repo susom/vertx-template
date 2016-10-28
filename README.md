@@ -79,3 +79,48 @@ because certain of the tools are mutually incompatible.
 mvn -DskipTests -Dcheck1 clean verify
 mvn -DskipTests -Dcheck2 clean verify
 ```
+
+#### Run Docker Locally
+
+To do this you should first install Docker for Mac (or Docker for Windows as the case may be).
+
+Build the Maven artifacts and use it to create a docker image.
+
+```
+mvn -DskipTests -Ppostgres,release clean package
+unzip target/deploy.zip -d target/deploy
+docker build --pull -t app target/deploy
+```
+
+Spin up the PostgreSQL database.
+
+```
+docker volume create --name postgres-data
+docker run -d --name postgres \
+       -v postgres-data:/var/lib/postgresql/data \
+       -e "POSTGRES_PASSWORD=secret" postgres
+```
+
+Spin up the application, linking to the database container.
+
+```
+docker volume create --name app-conf
+docker volume create --name app-logs
+docker run -it -v app-conf:/app/conf \
+       --name app app vi conf/app.properties
+  # Add this property to make it use fake authentication
+  insecure.fake.security=yes
+docker rm app
+docker run -d -p 8080:8080/tcp -v app-conf:/app/conf -v app-logs:/app/logs \
+       --link postgres:postgres --name app app
+```
+
+If you want to watch the logs:
+
+```
+docker exec -it app tail -f logs/app.log
+```
+
+Now open the application in your browser.
+
+[http://localhost:8080/secure-app](http://localhost:8080/secure-app)
