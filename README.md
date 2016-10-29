@@ -96,7 +96,7 @@ Spin up the PostgreSQL database.
 
 ```
 docker volume create --name postgres-data
-docker run -d --name postgres \
+docker run -d --name postgres -p 5432:5432 \
        -v postgres-data:/var/lib/postgresql/data \
        -e "POSTGRES_PASSWORD=secret" postgres
 ```
