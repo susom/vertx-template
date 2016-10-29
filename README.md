@@ -106,10 +106,15 @@ Spin up the application, linking to the database container.
 ```
 docker volume create --name app-conf
 docker volume create --name app-logs
-docker run -it -v app-conf:/app/conf \
-       --name app app vi conf/app.properties
-  # Add this property to make it use fake authentication
-  insecure.fake.security=yes
+docker run -it -v app-conf:/app/conf --name app app sh
+  vi conf/app.properties
+    # Add this property to make it use fake authentication
+    insecure.fake.security=yes
+  # Create the database schema
+  java -Dlog4j.configuration=file:log4j.xml -jar app.jar create-database
+  # Make sure there weren't any errors
+  cat logs/app.log
+  exit
 docker rm app
 docker run -d -p 8080:8080/tcp -v app-conf:/app/conf -v app-logs:/app/logs \
        --link postgres:postgres --name app app
