@@ -134,7 +134,9 @@ public class Main {
     PortInfo authServer = PortInfo.parseUrl(config.getString("auth.server.base.uri"));
     setSecurityPolicy(
         // Our server must listen on a local port
-        new SocketPermission(listen.host() + ":" + listen.port(), "listen,resolve"),
+        new SocketPermission("*:" + listen.port(), "listen,resolve"),
+        // TODO make this configurable
+        new SocketPermission("postgres:5432", "connect,resolve"),
         // For fake security we need to act as a client to our own embedded authentication
         config.getBooleanOrFalse("insecure.fake.security") ? new SocketPermission("localhost:" + listen.port(), "connect,resolve") : null,
         // Connecting to centralized authentication server
