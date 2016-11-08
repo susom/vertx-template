@@ -106,7 +106,8 @@ Spin up the application, linking to the database container.
 ```
 docker volume create --name app-conf
 docker volume create --name app-logs
-docker run -it -v app-conf:/app/conf --name app app sh
+docker run -it -v app-conf:/app/conf --name app \
+       --link postgres:postgres app sh
   vi conf/app.properties
     # Add this property to make it use fake authentication
     insecure.fake.security=yes
