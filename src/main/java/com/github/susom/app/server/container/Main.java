@@ -136,9 +136,11 @@ public class Main {
         // TODO make this configurable
         new SocketPermission("postgres:5432", "connect,resolve"),
         // For fake security we need to act as a client to our own embedded authentication
-        config.getBooleanOrFalse("insecure.fake.security") ? new SocketPermission("localhost:" + listen.port(), "connect,resolve") : null,
+        config.getBooleanOrFalse("insecure.fake.security") ? new SocketPermission(
+            "localhost:" + listen.port(), "connect,resolve") : null,
         // Connecting to centralized authentication server
-        authServer == null ? null : new SocketPermission(authServer.host() + ":" + authServer.port(), "connect,resolve"),
+        authServer == null ? null : new SocketPermission(
+            authServer.host() + ":" + authServer.port(), "connect,resolve"),
         // These two are for hsqldb to store its database files
         new FilePermission(workDir() + "/.hsql", "read,write,delete"),
         new FilePermission(workDir() + "/.hsql/-", "read,write,delete"),

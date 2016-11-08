@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="dataSourceStorage">
+  <data-source name="HSQLDB Embedded" uuid="6ca35605-5ece-4c23-ae7d-d1f82b36c872">
+    <database-info product="HSQL Database Engine" version="2.3.2" jdbc-version="4.0" driver-name="HSQL Database Engine Driver" driver-version="2.3.2">
+      <identifier-quote-string>&quot;</identifier-quote-string>
+    </database-info>
+    <case-sensitivity plain-identifiers="upper" quoted-identifiers="exact"/>
+    <schema name="PUBLIC" catalog="PUBLIC"/>
+  </data-source>
+</component>

@@ -1,18 +1,50 @@
-target
-build
-out
-classes
-.idea
-*.iml
+# Common build output from Maven, Ant, IntelliJ, Eclipse
+/target/
+/build/
+/out/
+/classes/
+/dependency-reduced-pom.xml
+
+# Local configuration for development purposes
+/conf/
 local.*
-.hsql
-.vagrant
-dependency-reduced-pom.xml
-.vertx
+*.local.*
+
+# IDE project files for IntelliJ - it tends to generate lots of files depending
+# on your exact version, which plugins are installed, etc., so ignore everything
+# except for a vetted list of things we want. In particular, we want code
+# formatting style (which needs to match the checkstyle Maven configuration).
+/.idea/*
+!/.idea/codeStyleSettings.xml
+!/.idea/.name
+!/.idea/dataSources.ids
+!/.idea/dataSources.xml
+!/.idea/vcs.xml
+!/.idea/compiler.xml
+!/.idea/encodings.xml
+!/.idea/modules.xml
+!/.idea/copyright/
+!/.idea/inspectionProfiles/
+
+# TODO Eclipse project files
+
+# Working directories for development
+/.hsql/
+/.vagrant/
+/.vertx/
+/file-uploads/
+
+# Don't want any encryption keys in version control
 *.jks
 *.jceks
 *.pkcs12
 *.pk12
 *.pem
 *.pfx
+
+# Operating system garbage
 .DS_Store
+[Tt]humbs.db
+
+# Just in case you put this in Subversion
+.svn/
