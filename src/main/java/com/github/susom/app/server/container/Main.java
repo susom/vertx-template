@@ -86,9 +86,7 @@ public class Main {
       Router root = rootRouter(vertx, context);
       Security security = new SecurityImpl(vertx, root, random, config::getString);
 
-      Router router = authenticatedRouter(vertx, random, security, logFullRequests);
-      root.mountSubRouter(context, router);
-      new SecureApp(db, random, security, config).configureRouter(vertx, router);
+      new SecureApp(db, random, security, config).configureRouter(vertx, security.authenticatedRouter(context));
 
       // Add status pages per DCS standards (JSON returned from /status and /status/app)
       new DatabaseHealthCheck(vertx, db, config).addStatusHandlers(root);
