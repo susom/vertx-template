@@ -57,12 +57,12 @@ public class Main {
     // variables needed to bootstrap things. Other application configuration
     // can be read from the database once the server is up.
     Config config = readConfig();
-    log.info("Configuration is being loaded as follows:\n" + config.sources());
+    log.info("Configuration is being loaded from the following sources in priority order:\n" + config.sources());
 
     // Coming soon...dev mode should start fake authentication, automatic reloading, etc.
     boolean devMode = config.getBooleanOrFalse("insecure.dev.mode");
     if (devMode) {
-      log.warn("Running in development mode");
+      log.warn("Running in development mode (INSECURE)");
     }
     PortInfo listen = PortInfo.parseUrl(config.getString("listen.url", "http://0.0.0.0:8080"));
     String context = '/' + config.getString("app.context", "home");
