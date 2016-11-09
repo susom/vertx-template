@@ -33,8 +33,10 @@ import java.net.SocketPermission;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
+import java.security.SecurityPermission;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.PropertyPermission;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +68,6 @@ public class Main {
     }
     PortInfo listen = PortInfo.parseUrl(config.getString("listen.url", "http://0.0.0.0:8080"));
     String context = '/' + config.getString("app.context", "home");
-    boolean logFullRequests = config.getBooleanOrFalse("insecure.log.full.requests");
 
     enableSecurityManager();
 
@@ -146,7 +147,13 @@ public class Main {
         new FilePermission(workDir() + "/.hsql/-", "read,write,delete"),
         // TODO read these before sandboxing and deny permission later?
 //        new FilePermission(workDir + "/local.jwt.jceks", "read"),
-        new FilePermission(workDir() + "/local.ssl.jks", "read")
+        new FilePermission(workDir() + "/local.ssl.jks", "read"),
+        new FilePermission(workDir() + "/file-uploads", "read,write"),
+        // The SAML implementation needs these four (xml parsing; write metadata into conf)
+        new FilePermission(workDir() + "/conf", "read,write"),
+        new FilePermission(workDir() + "/conf/-", "read,write"),
+        new SecurityPermission("org.apache.xml.security.register"),
+        new PropertyPermission("org.apache.xml.security.ignoreLineBreaks", "write")
     );
     return this;
   }
