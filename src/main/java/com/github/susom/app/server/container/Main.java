@@ -106,6 +106,7 @@ public class Main {
 //        }
         options.setSsl(true).setKeyStoreOptions(new JksOptions().setPath(sslKeyPath).setPassword(sslKeyPassword));
       }
+      options.setCompressionSupported(config.getBooleanOrTrue("http.compression"));
       vertx.createHttpServer(options).requestHandler(root::accept).listen(listen.port(), listen.host(), result -> {
         if (result.succeeded()) {
           int actualPort = result.result().actualPort();
