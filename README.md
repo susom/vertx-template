@@ -61,7 +61,7 @@ java -jar target/vertx-*-SNAPSHOT.jar run
 If you want to wipe out the embedded database, just delete the data files.
 
 ```
-rm -rf ./hsql
+rm -rf .hsql
 ```
 
 You can combine the above to quickly reset and restart everything.
