@@ -64,7 +64,7 @@ public class Main {
     // Coming soon...dev mode should start fake authentication, automatic reloading, etc.
     boolean devMode = config.getBooleanOrFalse("insecure.dev.mode");
     if (devMode) {
-      log.warn("Running in development mode (INSECURE)");
+      log.warn("Running in development mode (INSECURE) because of property 'insecure.dev.mode'");
     }
     PortInfo listen = PortInfo.parseUrl(config.getString("listen.url", "http://0.0.0.0:8080"));
     String context = '/' + config.getString("app.context", "home");
