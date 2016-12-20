@@ -16,7 +16,6 @@ local.*
 # formatting style (which needs to match the checkstyle Maven configuration).
 /.idea/*
 !/.idea/codeStyleSettings.xml
-!/.idea/.name
 !/.idea/dataSources.ids
 !/.idea/dataSources.xml
 !/.idea/vcs.xml
