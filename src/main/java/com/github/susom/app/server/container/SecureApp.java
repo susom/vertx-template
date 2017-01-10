@@ -19,6 +19,7 @@ import com.github.susom.app.server.services.MessageDao;
 import com.github.susom.app.server.services.MessageDao.Message;
 import com.github.susom.database.Config;
 import com.github.susom.database.DatabaseProviderVertx.Builder;
+import com.github.susom.vertx.base.AuthenticatedUser;
 import com.github.susom.vertx.base.Security;
 import com.github.susom.vertx.base.StrictResourceHandler;
 import com.github.susom.vertx.base.Valid;
@@ -57,6 +58,9 @@ public class SecureApp {
     // To keep things clean, use a method reference and implement the API in a method below.
     router.get("/api/v1/secret").handler(this::secretApi).failureHandler(VertxBase::jsonApiFail);
 
+    // Test page to see information about the authenticated user
+    router.get("/me").handler(this::me).failureHandler(VertxBase::jsonApiFail);
+
     // Static content coming from the Java classpath. This is last in this
     // method because the routing path overlaps with the others above, and
     // we want them to take precedence.
@@ -69,6 +73,15 @@ public class SecureApp {
 
   // Place API handlers into separate methods to keep the above routing
   // as clear as possible.
+
+  private void me(RoutingContext rc) {
+    AuthenticatedUser user = AuthenticatedUser.from(rc);
+    rc.response().setStatusCode(200).end("Hello!\n\nAuthenticated as: " + user.getAuthenticatedAs()
+        + "\nDisplay name: " + user.getFullDisplayName()
+        + "\nActing as: " + user.getActingAs()
+        + "\nPrincipal:\n" + rc.user().principal().encodePrettily());
+  }
+
   private void secretApi(RoutingContext rc) {
     // There are lots of helpful input validation routines to choose from.
     // This wil throw a BadRequestException if it fails, which will be handled
