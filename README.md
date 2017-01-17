@@ -80,6 +80,29 @@ mvn -DskipTests -Dcheck1 clean verify
 mvn -DskipTests -Dcheck2 clean verify
 ```
 
+#### Using PostgreSQL or Oracle
+
+Since the application is built as a standard, executable .jar file, using a "real"
+database requires bundling the appropriate JDBC driver along with the application.
+To do this, just make sure you run the Maven build with the appropriate profile.
+For example:
+
+```
+mvn -DskipTests -Ppostgres clean package
+```
+
+or:
+
+```
+mvn -DskipTests -Poracle clean package
+```
+
+If you want a binary that can be used with either database you can include both:
+
+```
+mvn -DskipTests -Ppostgres,oracle clean package
+```
+
 #### Run Docker Locally
 
 To do this you should first install Docker for Mac (or Docker for Windows as the case may be).
