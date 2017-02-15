@@ -47,3 +47,6 @@ local.*
 
 # Just in case you put this in Subversion
 .svn/
+
+# Emacs backup files
+*~
