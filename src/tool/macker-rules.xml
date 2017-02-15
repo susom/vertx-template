@@ -28,6 +28,7 @@
       <include class="java.time.**"/>
       <include class="javax.activation.**"/>
       <include class="javax.mail.**"/>
+      <include class="javax.management.*Permission"/>
       <include class="javax.inject.**"/>
     </pattern>
     <pattern name="server-libs">
