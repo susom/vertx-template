@@ -1,4 +1,6 @@
-This is an opinionated way to build APIs and API-based web applications with a relational database as the primary data store.
+[![Build Status](https://travis-ci.org/susom/server-logging.svg?branch=master)](https://travis-ci.org/susom/server-logging)
+
+An opinionated way to build APIs and API-based web applications with a relational database as the primary data store.
 
 ### Goals
 
@@ -22,10 +24,6 @@ This is an opinionated way to build APIs and API-based web applications with a r
 
 [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
 and [Maven 3](https://maven.apache.org/).
-
-Some of the libraries referenced by this project are currently private to
-IRT, so you will need to have Maven configured to use our internal repository
-(see https://medwiki.stanford.edu/display/kbase/Maven).
 
 #### Run Locally
 
