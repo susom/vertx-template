@@ -84,6 +84,10 @@ public class Main {
     if (argSet.contains("create-database") || (devMode && !Files.exists(Paths.get(".hsql"))
         && "jdbc:hsqldb:file:.hsql/db;shutdown=true".equals(config.getString("database.url")))) {
       CreateSchema.run(argSet, config);
+      if (argSet.size() == 1 && argSet.contains("create-database")) {
+        log.info("Only the create-database argument was provided, so exiting without starting the server");
+        System.exit(0);
+      }
     }
     // TODO database upgrade checks
 
