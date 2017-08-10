@@ -119,7 +119,7 @@ public class Main {
         if (result.succeeded()) {
           int actualPort = result.result().actualPort();
           if (devMode) {
-            log.info("Started server on port {}: {}://localhost:{}{}/?a=b#c", actualPort, listen.proto(), actualPort, context);
+            log.info("Started server: {}://localhost:{}{}/", listen.proto(), actualPort, context);
           } else {
             log.info("Started server on port {}", actualPort);
           }
