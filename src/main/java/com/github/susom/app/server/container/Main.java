@@ -30,6 +30,7 @@ import io.vertx.core.net.JksOptions;
 import io.vertx.ext.web.Router;
 import java.io.File;
 import java.io.FilePermission;
+import java.io.PrintStream;
 import java.lang.management.ManagementPermission;
 import java.net.SocketPermission;
 import java.nio.file.Files;
@@ -120,21 +121,26 @@ public class Main {
       }
       options.setCompressionSupported(config.getBooleanOrTrue("http.compression"));
       vertx.createHttpServer(options).requestHandler(root::accept).listen(listen.port(), listen.host(), result -> {
-        if (result.succeeded()) {
-          int actualPort = result.result().actualPort();
-          if (devMode) {
-            log.info("Started server: {}://localhost:{}{}/", listen.proto(), actualPort, context);
+        try {
+          if (result.succeeded()) {
+            int actualPort = result.result().actualPort();
+            if (devMode) {
+              log.info("Started server: {}://localhost:{}{}/", listen.proto(), actualPort, context);
+            } else {
+              log.info("Started server on port {}", actualPort);
+            }
+
+            // Make sure we cleanly shutdown Vert.x and the database pool on exit
+            addShutdownHook(vertx, db::close);
           } else {
-            log.info("Started server on port {}", actualPort);
+            log.error("Could not start server on port " + listen.port(), result.cause());
+
+            vertx.close();
+            db.close();
           }
-
-          // Make sure we cleanly shutdown Vert.x and the database pool on exit
-          addShutdownHook(vertx, db::close);
-        } else {
-          log.error("Could not start server on port " + listen.port(), result.cause());
-
-          vertx.close();
-          db.close();
+        } catch (Throwable t) {
+          log.error("Unexpected error", t);
+          throw t;
         }
       });
     }
@@ -202,10 +208,14 @@ public class Main {
   }
 
   public static void main(String[] args) {
+    // Make sure we use the real console for error logging here because something
+    // might have gone wrong during log config or console redirection
+    PrintStream err = System.err;
     try {
       new Main().installSecurityPolicy().launch(args);
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Throwable t) {
+      t.printStackTrace(err);
+      err.println("Exiting with error code 1");
       System.exit(1);
     }
   }
