@@ -1,3 +1,5 @@
+## Template Web Application
+
 [![Build Status](https://travis-ci.org/susom/server-logging.svg?branch=master)](https://travis-ci.org/susom/server-logging)
 [![Dependency Status](https://www.versioneye.com/user/projects/59b6f38e368b0856c350cceb/badge.svg?style=flat)](https://www.versioneye.com/user/projects/59b6f38e368b0856c350cceb)
 
