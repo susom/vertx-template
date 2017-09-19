@@ -23,6 +23,12 @@
   </properties>
 
   <dependencies>
+    <!-- Temporary override to pickup snapshots -->
+    <dependency>
+      <groupId>com.github.susom</groupId>
+      <artifactId>vertx-base</artifactId>
+      <version>1.1-SNAPSHOT</version>
+    </dependency>
     <!-- There are three profiles ("hsql" the default, "postgres", and "oracle")
          that are normally used to control which database drivers get embedded
          in our executable jar. If you want to always include a particular set,
@@ -151,6 +157,20 @@
          -Dcheck1 (a.k.a. -Pcheck-errorprone,check-macker,check-forbidden,checkstyle)
          -Dcheck2 (a.k.a. -Pchecker)
          -->
+    <profile>
+      <id>packagecloud</id>
+      <distributionManagement>
+        <snapshotRepository>
+          <id>packagecloud</id>
+          <url>packagecloud+https://packagecloud.io/garricko/travis</url>
+        </snapshotRepository>
+        <repository>
+          <id>packagecloud</id>
+          <url>packagecloud+https://packagecloud.io/garricko/travis</url>
+        </repository>
+      </distributionManagement>
+    </profile>
+
     <profile>
       <id>release</id>
       <build>
