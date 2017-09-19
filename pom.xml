@@ -159,16 +159,16 @@
          -->
     <profile>
       <id>packagecloud</id>
-      <distributionManagement>
-        <snapshotRepository>
-          <id>packagecloud</id>
-          <url>packagecloud+https://packagecloud.io/garricko/travis</url>
-        </snapshotRepository>
+      <repositories>
         <repository>
           <id>packagecloud</id>
-          <url>packagecloud+https://packagecloud.io/garricko/travis</url>
+          <url>https://packagecloud.io/garricko/travis/maven2</url>
+          <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+          </snapshots>
         </repository>
-      </distributionManagement>
+      </repositories>
     </profile>
 
     <profile>
