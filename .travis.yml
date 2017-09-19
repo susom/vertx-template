@@ -7,6 +7,8 @@ addons:
 #before_script:
 #  - psql -U postgres -c "create user test with password 'test';"
 #  - psql -c 'create database test owner test;' -U postgres
+# Skip the default mvn command because we want to set the profile explicitly
+install: true
 script:
   - mvn -Ppackagecloud -DskipTests -Dcheck1 verify
   - mvn -Ppackagecloud -DskipTests -Dcheck2 clean verify
