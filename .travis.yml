@@ -2,12 +2,18 @@ language: java
 jdk:
   - openjdk8
 addons:
-  srcclr: ($TRAVIS_EVENT_TYPE == "cron")
+  srcclr: true
 #  postgresql: "9.3"
 #before_script:
 #  - psql -U postgres -c "create user test with password 'test';"
 #  - psql -c 'create database test owner test;' -U postgres
 # Skip the default mvn command because we want to set the profile explicitly
+before_install:
+  - |
+    if [ "$TRAVIS_EVENT_TYPE" != "cron" ]
+    then
+      export NOSCAN=true
+    fi
 install: true
 script:
   - mvn -Ppackagecloud -DskipTests -Dcheck1 verify
