@@ -2,7 +2,7 @@ language: java
 jdk:
   - openjdk8
 addons:
-  srcclr: true
+  srcclr: ($TRAVIS_EVENT_TYPE == "cron")
 #  postgresql: "9.3"
 #before_script:
 #  - psql -U postgres -c "create user test with password 'test';"
