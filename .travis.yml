@@ -12,7 +12,7 @@ before_install:
   - |
     if [ "$TRAVIS_EVENT_TYPE" != "cron" ]
     then
-      export NOSCAN=true
+      export NOSCAN=1
     fi
 install: true
 script:
