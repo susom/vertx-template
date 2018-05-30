@@ -29,6 +29,12 @@
       <artifactId>vertx-base</artifactId>
       <version>1.1-SNAPSHOT</version>
     </dependency>
+    <dependency>
+      <groupId>com.oracle.jdbc</groupId>
+      <artifactId>ojdbc7</artifactId>
+      <version>12.1.0.2</version>
+      <scope>runtime</scope>
+    </dependency>
     <!-- There are three profiles ("hsql" the default, "postgres", and "oracle")
          that are normally used to control which database drivers get embedded
          in our executable jar. If you want to always include a particular set,

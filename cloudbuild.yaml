@@ -1,0 +1,39 @@
+# cloudbuild.yaml for building vertx-template with Oracle DB in GCB
+
+
+# Credentials of SourceClear and Docker Store are encrypted using Google Cloud KMS
+# Docker Store secret is used for Oracle DB
+# See below link for more information on using Google Cloud KMS:
+# https://cloud.google.com/container-builder/docs/securing-builds/use-encrypted-secrets-credentials#encrypting_an_environment_variable_using_the_cryptokey
+
+secrets:
+- kmsKeyName: projects/<GCP-PROJECT-ID>/locations/global/keyRings/<GCP-KMS-KEYRING-NAME>/cryptoKeys/<GCP-KMS-KEY-NAME>
+  secretEnv:
+    SRCCLR_API_TOKEN: <ENCRYPTED-SOURCECLEAR-AGENT-API-TOKEN>
+    DOCKER_USERNAME: <ENCRYPTED-DOCKER-USERNAME>
+    DOCKER_PASSWORD: <ENCRYPTED-DOCKER-PASSWORD>
+
+# Build Steps:
+# 1. ojdbc7.jar is copied from Google Cloud Storage bucket to GCB workspace for
+#    using local maven repository to get the ojdbc7.jar dependency
+# 2. This build step uses docker-compose custom image based on gcr.io/cloud-builders/mvn and invokes a shell script "docker-compose.sh" which launches dbserver and appserver services using docker-compose. The dbserver service is a Oracle container and appserver service runs mvn commands.
+
+# 3. Building GCR image with JAR artifacts.
+
+# Note: Edited sample.properties for Oracle and enabled ojdbc7 dependency in pom.xml
+# Note: docker-compose.yml is used by docker-compose in "docker-compose.sh" in Build Step 2
+# Note: "check_oracle_table.sh" is used in "docker-compose.sh"  to verify creation of tables in Oracle DB.
+# Note: Dockerfile is used in step 3 to build GCR image with JAR artifacts
+
+steps:
+- name: gcr.io/cloud-builders/gsutil
+  args: ['cp', 'gs://<GCS-BUCKET-HOSTING-OJDBC7.JAR>/ojdbc7.jar', 'ojdbc7.jar']
+- name: 'gcr.io/$PROJECT_ID/docker-compose:latest'
+  entrypoint: 'bash'
+  args: ['-c', './docker-compose.sh']
+  secretEnv: ['SRCCLR_API_TOKEN','DOCKER_USERNAME','DOCKER_PASSWORD']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ["build", "-t", "gcr.io/$PROJECT_ID/vertx-template-oracle:latest", "."]
+
+images:
+  - 'gcr.io/$PROJECT_ID/vertx-template-oracle:latest'

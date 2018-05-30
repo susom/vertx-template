@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+ dbserver:
+   image: store/oracle/database-enterprise:12.2.0.1-slim
+   container_name: dbserver
+   volumes:
+     - /workspace:/workspace
+   ports:
+     - "1521:1521"
+ appserver:
+   image: gcr.io/cloud-builders/mvn
+   container_name: appserver
+   environment:
+   - SRCCLR_API_TOKEN=$SRCCLR_API_TOKEN
+   volumes:
+     - /workspace:/workspace
+   entrypoint: |
+     bash -c "
+     apt-get update; apt-get install curl -y; \
+     cd /workspace; mvn install:install-file -Dfile=./ojdbc7.jar \
+     -DgroupId=com.oracle.jdbc -DartifactId=ojdbc7 -Dversion=12.1.0.2 \
+     -Dpackaging=jar; mvn -DskipTests clean package; \
+     curl -sSL https://download.sourceclear.com/ci.sh | sh; \
+     nohup java -Ddatabase.url=jdbc:oracle:thin:@dbserver.workspace_default:1521/ORCLCDB.localdomain \
+     -Djava.security.egd=file:/dev/./urandom -jar ./target/vertx-*-SNAPSHOT.jar create-database run 2>&1 &"
+   depends_on:
+     - dbserver
