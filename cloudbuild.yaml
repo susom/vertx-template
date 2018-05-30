@@ -1,0 +1,33 @@
+# cloudbuild.yaml for building vertx-template with Postgres DB in GCB
+
+
+# Credential of SourceClear is encrypted using Google Cloud KMS
+# See below link for more information on using Google Cloud KMS:
+# https://cloud.google.com/container-builder/docs/securing-builds/use-encrypted-secrets-credentials#encrypting_an_environment_variable_using_the_cryptokey
+
+secrets:
+- kmsKeyName: projects/<GCP-PROJECT-ID>/locations/global/keyRings/<GCP-KMS-KEYRING-NAME>/cryptoKeys/<GCP-KMS-KEY-NAME>
+  secretEnv:
+    SRCCLR_API_TOKEN: <ENCRYPTED-SOURCECLEAR-AGENT-API-TOKEN>
+
+# Build Steps:
+# 1. This build step uses docker-compose custom image based on gcr.io/cloud-builders/mvn and invokes a shell script "docker-compose.sh" which launches dbserver and appserver services using docker-compose. The dbserver service is a Postgres container and appserver service runs mvn commands.
+
+# 2. Building GCR image with JAR artifacts.
+
+# Note: Edited sample.properties for Postgres
+# Note: docker-compose.yml is used by docker-compose in "docker-compose.sh" in Build Step 1
+# Note: "check_postgres_table.sh" is used in "docker-compose.sh"  to verify creation of tables in Postgres DB.
+# Note: Dockerfile is used in step 2 to build GCR image with JAR artifacts
+
+steps:
+- name: 'gcr.io/$PROJECT_ID/docker-compose:latest'
+  entrypoint: 'bash'
+  args: ['-c', './docker-compose.sh']
+  secretEnv: ['SRCCLR_API_TOKEN']
+  env: ['DB_VER=9.3','DB_USR=test','DB_PASS=test','DB_NAME=test','DB_URL=dbserver.workspace_default']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ["build", "-t", "gcr.io/$PROJECT_ID/vertx-template-postgres:latest", "."]
+
+images:
+  - 'gcr.io/$PROJECT_ID/vertx-template-postgres:latest'

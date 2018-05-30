@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+ dbserver:
+   image: postgres:$DB_VER
+   container_name: dbserver
+   volumes:
+     - /workspace:/workspace
+   ports:
+     - "5432:5432"
+   environment:
+     POSTGRES_PASSWORD: $DB_PASS
+     POSTGRES_USER: $DB_USR
+     POSTGRES_DB: $DB_NAME
+     POSTGRES_URL: $DB_URL
+ appserver:
+   image: gcr.io/cloud-builders/mvn
+   container_name: appserver
+   environment:
+   - SRCCLR_API_TOKEN=$SRCCLR_API_TOKEN
+   volumes:
+     - /workspace:/workspace
+   entrypoint: |
+     bash -c "
+     apt-get update; apt-get install curl -y; \
+     cd /workspace; mvn -DskipTests -Ppostgres clean package; \
+     curl -sSL https://download.sourceclear.com/ci.sh | sh; \
+     nohup java -jar ./target/vertx-*-SNAPSHOT.jar create-database run 2>&1 & sleep 1"
+   depends_on:
+     - dbserver
