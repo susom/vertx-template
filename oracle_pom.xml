@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.github.susom</groupId>
+    <artifactId>vertx-parent</artifactId>
+    <version>1.1</version>
+  </parent>
+
+  <artifactId>vertx-template</artifactId>
+  <packaging>jar</packaging>
+  <version>1.0-SNAPSHOT</version>
+
+  <name>${project.groupId}:${project.artifactId}</name>
+  <description>Sample Vert.x application.</description>
+  <url>https://github.com/susom/vertx-template</url>
+
+  <properties>
+    <main.class>com.github.susom.app.server.container.Main</main.class>
+  </properties>
+
+  <dependencies>
+    <!-- Temporary override to pickup snapshots -->
+    <dependency>
+      <groupId>com.github.susom</groupId>
+      <artifactId>vertx-base</artifactId>
+      <version>1.1-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>com.oracle.jdbc</groupId>
+      <artifactId>ojdbc7</artifactId>
+      <version>12.1.0.2</version>
+      <scope>runtime</scope>
+    </dependency>
+    <!-- There are three profiles ("hsql" the default, "postgres", and "oracle")
+         that are normally used to control which database drivers get embedded
+         in our executable jar. If you want to always include a particular set,
+         uncomment them here.
+    <dependency>
+      <groupId>org.hsqldb</groupId>
+      <artifactId>hsqldb</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.oracle</groupId>
+      <artifactId>ojdbc7</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    -->
+
+    <!-- You get the latest JUnit and VertxUnit from the parent, but you
+         might want this one as well
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
+      <version>1.10.8</version>
+      <scope>test</scope>
+    </dependency>
+    -->
+  </dependencies>
+
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Garrick Olson</name>
+      <email>garricko@stanford.edu</email>
+      <organization>Stanford Medicine</organization>
+      <organizationUrl>https://med.stanford.edu</organizationUrl>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:https://github.com/susom/vertx-template.git</connection>
+    <developerConnection>scm:git:https://github.com/susom/vertx-template.git</developerConnection>
+    <url>https://github.com/susom/vertx-template</url>
+    <tag>HEAD</tag>
+  </scm>
+
+  <repositories>
+    <repository>
+      <id>packagecloud</id>
+      <url>https://packagecloud.io/garricko/travis/maven2</url>
+      <snapshots>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+      </snapshots>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+    </repository>
+    <repository>
+      <id>central</id>
+      <url>https://repo.maven.apache.org/maven2/</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+    </repository>
+  </repositories>
+
+  <distributionManagement>
+    <snapshotRepository>
+      <id>packagecloud</id>
+      <url>https://packagecloud.io/garricko/travis/maven2</url>
+    </snapshotRepository>
+    <repository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+  </distributionManagement>
+
+  <build>
+    <plugins>
+      <plugin>
+        <!-- Unpack files from parent pom so later plugins can use them
+             (some plugins require actual files for config rather than
+             using resources) -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.10</version>
+        <configuration>
+          <outputDirectory>target/parent-files</outputDirectory>
+          <artifactItems>
+            <artifactItem>
+              <groupId>${project.parent.groupId}</groupId>
+              <artifactId>vertx-parent-file</artifactId>
+              <version>${project.parent.version}</version>
+            </artifactItem>
+          </artifactItems>
+          <includeArtifactIds>vertx-parent-files</includeArtifactIds>
+        </configuration>
+        <executions>
+          <execution>
+            <id>unpack-parent-files</id>
+            <goals>
+              <goal>unpack-dependencies</goal>
+            </goals>
+            <phase>generate-resources</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <!-- Run unit tests matching **/*(^(Db|Oracle|Hsql|Postgres))Test-->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <!-- Run database/system tests matching **/*(Db|Oracle|Hsql|Postgres)Test-->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <!-- Create the combined executable jar -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <!-- There are a number of profiles you get for free from the parent. For
+         database drivers and database specific integration tests:
+
+         -P hsql (default if no other profile is active)
+         -P postgres
+         -P oracle
+
+         Some code analysis tools are mutually incompatible, so those profiles
+         are grouped into two sets, enabled by system properties:
+
+         -Dcheck1 (a.k.a. -Pcheck-errorprone,check-macker,check-forbidden,checkstyle)
+         -Dcheck2 (a.k.a. -Pchecker)
+         -->
+    <profile>
+      <id>packagecloud</id>
+      <repositories>
+        <repository>
+          <id>packagecloud</id>
+          <url>https://packagecloud.io/garricko/travis/maven2</url>
+          <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+          </snapshots>
+        </repository>
+      </repositories>
+    </profile>
+
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <!-- Create deploy.zip with app and docker artifacts-->
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>release-sign-artifacts</id>
+      <activation>
+        <property>
+          <name>performRelease</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.5</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>
