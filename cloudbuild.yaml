@@ -55,12 +55,6 @@ steps:
          -v /workspace:/workspace $$ORACLEDB_IMAGE"]
   env: ['ORACLEDB_IMAGE=store/oracle/database-enterprise:12.2.0.1-slim', 'ORACLEDB_SERVER=oracle-dbserver',
         'ORACLEDB_NET=stanford-oracledb']
- 
- # Checking the health of Oracle DB server
-- name: 'gcr.io/cloud-builders/docker'
-  entrypoint: 'bash'
-  args: ['-c', './check_oracledb_health.sh']
-  env: ['DB_HLTH_CHK_MAX_RETRY=7', 'DB_HLTH_CHK_SLEEP=20', 'ORACLEDB_SERVER=oracle-dbserver']
 
 # Building application jar using APP build server
 - name: 'gcr.io/cloud-builders/docker'
@@ -74,6 +68,12 @@ steps:
   env: ['APP_BUILD_SERVER=oracledb-app-build-server', 'ORACLEDB_NET=stanford-oracledb',
         'APP_BUILD_IMAGE=gcr.io/cloud-builders/mvn']
   secretEnv: ['SRCCLR_API_TOKEN']
+
+# Checking the health of Oracle DB server
+- name: 'gcr.io/cloud-builders/docker'
+  entrypoint: 'bash'
+  args: ['-c', './check_oracledb_health.sh']
+  env: ['DB_HLTH_CHK_MAX_RETRY=7', 'DB_HLTH_CHK_SLEEP=20', 'ORACLEDB_SERVER=oracle-dbserver']
 
 # Testing application jar using APP test server
 - name: 'gcr.io/cloud-builders/docker'
@@ -120,13 +120,6 @@ steps:
   env: ['POSTGRES_IMAGE=postgres:9.3', 'POSTGRES_USER=test', 'POSTGRES_PASSWORD=test', 'POSTGRES_DB=test',
         'POSTGRES_SERVER=postgres-dbserver', 'POSTGRES_NET=stanford-postgres']
 
-# Checking the health of Postgres server
-- name: 'gcr.io/cloud-builders/docker'
-  entrypoint: 'bash'
-  args: ['-c', "docker exec -e POSTGRES_SERVER -e DB_HLTH_CHK_MAX_RETRY \
-         -e DB_HLTH_CHK_SLEEP $$POSTGRES_SERVER /workspace/check_postgres_health.sh"]
-  env: ['DB_HLTH_CHK_MAX_RETRY=7', 'DB_HLTH_CHK_SLEEP=20', 'POSTGRES_SERVER=postgres-dbserver']
-
 # Building application jar using APP build server
 - name: 'gcr.io/cloud-builders/docker'
   entrypoint: 'bash'
@@ -137,6 +130,13 @@ steps:
   env: ['APP_BUILD_SERVER=postgres-app-build-server', 'POSTGRES_NET=stanford-postgres',
         'APP_BUILD_IMAGE=gcr.io/cloud-builders/mvn']
   secretEnv: ['SRCCLR_API_TOKEN']
+
+# Checking the health of Postgres server
+- name: 'gcr.io/cloud-builders/docker'
+  entrypoint: 'bash'
+  args: ['-c', "docker exec -e POSTGRES_SERVER -e DB_HLTH_CHK_MAX_RETRY \
+         -e DB_HLTH_CHK_SLEEP $$POSTGRES_SERVER /workspace/check_postgres_health.sh"]
+  env: ['DB_HLTH_CHK_MAX_RETRY=7', 'DB_HLTH_CHK_SLEEP=20', 'POSTGRES_SERVER=postgres-dbserver']
 
 # Testing application jar using APP test server
 - name: 'gcr.io/cloud-builders/docker'
