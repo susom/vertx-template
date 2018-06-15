@@ -13,11 +13,11 @@
 # https://cloud.google.com/container-builder/docs/securing-builds/use-encrypted-secrets-credentials#encrypting_an_environment_variable_using_the_cryptokey
 
 secrets:
-- kmsKeyName: 'projects/[GCP-PROJECT-ID]/locations/global/keyRings/[GCP-KMS-KEYRING-NAME]/cryptoKeys/[GCP-KMS-KEY-NAME]'
+- kmsKeyName: 'projects/som-rit-infrastructure-dev/locations/global/keyRings/susom-encryption-keyring/cryptoKeys/susom-encryption-key'
   secretEnv:
-    SRCCLR_API_TOKEN:[ENCRYPTED-SOURCECLEAR-AGENT-API-TOKEN]
-    DOCKER_USERNAME: [ENCRYPTED-DOCKER-USERNAME]
-    DOCKER_PASSWORD: [ENCRYPTED-DOCKER-PASSWORD]
+    SRCCLR_API_TOKEN: CiQAZ2BXpn/Kh1BhBPJTo04sTqH7HvWveMKq7XWanLFLLlBqdlwSxgMA+/0rWrQhkX0mwX+/XXqIGA7ltoW3+8hGID8fCpX3RPHzWzKtepUSyYoB0aDnTox7D3HFx4jZxl5XwpBznP4dxuovhSiwwT+HPRAvoxDMivrPYltPXmDkSE6VTCo2weFw9mQeyi6VIaha/lzDVQIsmZDIMbq8l3fLA6GxcJKjK137DOuNW1pnCg7sEJq7IKR7j4iMyKLDvplJUBb6vIXGMBunj8gNUXLsC0uunol2XmRrDSHlQAGxmz608CUiqygieygLW5/SIV4ApM6XweN74XzmpsZk+DW1HmRxvx/J1q0aVCYML/tanyxI/KpqhOisoEPfJLnRsJaEDORQqLC3Sb9ZTUSj0PVF1CHV6SjggEcB/UyGAqmAE5Hd4wvj2GhE0EjPApaUPHU5KrvTv6xWOOfSTUO5z5jZdebPHxDvP4UMgWyhIFgRwqptdAGC3hVy02fLxarQABFAKBL23+UZZKDloE13qmcNtak9EqfG7HbJbfi8NhOSSl5w/f6U+VPiLjkFHrn8Sjst9L/nhlFn2E6OqoOYiHdJTW4uG9U7QBVHZw1n9xSuB9SiHZYYB2ttXX3TcthyzKddxs0w03AwXS04rwaL
+    DOCKER_USERNAME: CiQAZ2BXpv1Ooms6nocrIRlv3ikIAvvQ3Cu1kLR+0c/re88rOTsSMgD7/StaAzqTQq1IeXEQwBifL0au7PVZcnsOwNUKGIDUyb33eeiySHEebmiRL/jQ+Lhd
+    DOCKER_PASSWORD: CiQAZ2BXprYOJAqrlJaAO9oGJHhrz6MiuN8J4se4Ne4CADhtkVoSNAD7/StaXPEWv9XQ80ID4QTyTyo5ApD3uOAsUb9bhc0irKIwHJq7eVlo9dc5DmlBgC1DED8=
 
 # Build Steps:
 steps:
@@ -28,7 +28,7 @@ steps:
 
 # Copying ojdbc7 dependency in GCB workspace
 - name: 'gcr.io/cloud-builders/gsutil'
-  args: ['cp', 'gs://[GCS-BUCKET-HOSTING-OJDBC7.JAR]/ojdbc7.jar', 'ojdbc7.jar']
+  args: ['cp', 'gs://susom-vertx-template-jdbc/ojdbc7.jar', 'ojdbc7.jar']
 
 # Copying sample.properties and pom.xml
 - name: 'gcr.io/cloud-builders/docker'
