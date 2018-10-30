@@ -203,7 +203,7 @@ public class Main {
   }
 
   private Config readConfig() {
-    String properties = System.getProperty("properties", "conf/app.properties:local.properties:sample.properties");
+    String properties = System.getProperty("properties", "conf/app.properties" + File.pathSeparator + "local.properties" + File.pathSeparator + "sample.properties");
     return Config.from().systemProperties().propertyFile(properties.split(File.pathSeparator)).get();
   }
 
