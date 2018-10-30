@@ -48,6 +48,12 @@ need to adjust your local properties if you use a different database.
 cp sample.properties local.properties
 ```
 
+Note that for improved security, the Main class will run with the
+Java sandbox enabled, and will prohibit outbound network connections.
+If you need to connect out to a database, email server, etc., be sure
+to set the `connect.outbound` configuration property so the intended
+hosts will be allowed.
+
 #### Maven Instructions
 
 Build everything, create the database schema, and start the server.
