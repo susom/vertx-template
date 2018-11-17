@@ -61,7 +61,8 @@ public class CreateSchema {
           db.ddl("create user " + databaseUser + " with password '" + databasePassword + '\'').execute();
           db.ddl("create schema authorization " + databaseUser).execute();
           db.ddl("grant all privileges on schema " + databaseUser + " to " + databaseUser).execute();
-          db.ddl("grant connect on database " + databaseUrl.substring(databaseUrl.lastIndexOf('/') + 1) + " to "
+          db.ddl("grant connect on database " + databaseUrl.substring(databaseUrl.contains("/")
+              ? databaseUrl.lastIndexOf('/') + 1 : databaseUrl.lastIndexOf(':') + 1) + " to "
               + databaseUser).execute();
         } else if (db.flavor() == Flavor.oracle) {
           // Drop quietly in case it doesn't already exist
