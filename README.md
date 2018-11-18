@@ -9,12 +9,12 @@ An opinionated way to build APIs and API-based web applications with a relationa
 - Provide a production-quality template you can follow to build a web application
   - Health checks, error handling, logging, performance, security, etc.
 - Secure by default, with support for advanced security features
-  - Centralized authentication
-  - Centralized coordination of active defense
-  - Runtime checks and reporting of library/platform vulnerabilities
+  - Centralized authentication (see [SAML Configuration](https://github.com/susom/vertx-template/wiki/Deploying-with-SAML-Authentication))
+  - [Future] Centralized coordination of active defense
+  - [Future] Runtime checks and reporting of library/platform vulnerabilities
   - Fully leverage the Java security sandbox
   - Pre-configure static source code analysis tools
-- Easy to set up and develop with
+- Easy to set up and develop with (see [Create an Application](https://github.com/susom/vertx-template/wiki/Create-an-Application))
   - Embedded HSQLDB database
   - Embedded fake authentication and authorization
   - Easy to Dockerize and deploy/manage
