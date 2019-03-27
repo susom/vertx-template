@@ -16,9 +16,10 @@ before_install:
     fi
 install: true
 script:
-  - mvn -Ppackagecloud -DskipTests -Dcheck1 verify
-  - mvn -Ppackagecloud -DskipTests -Dcheck2 clean verify
-  - mvn -Ppackagecloud -e clean package
+  - cp .travis.settings.xml $HOME/.m2/settings.xml
+  - mvn -DskipTests -Dcheck1 verify
+  - mvn -DskipTests -Dcheck2 clean verify
+  - mvn -e clean package
 #  - mvn -e -Dpostgres.database.url=jdbc:postgresql:test -Dpostgres.database.user=test -Dpostgres.database.password=test -P postgresql test
 after_failure:
   - echo "\n=== SUREFIRE REPORTS ===\n"
