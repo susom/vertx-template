@@ -19,8 +19,7 @@ import com.github.susom.app.server.services.CreateSchema;
 import com.github.susom.database.Config;
 import com.github.susom.database.DatabaseProviderVertx;
 import com.github.susom.database.DatabaseProviderVertx.Builder;
-import com.github.susom.database.Flavor;
-import com.github.susom.dbgoodies.vertx.DatabaseHealthCheck;
+import com.github.susom.vertx.base.DatabaseHealthCheck;
 import com.github.susom.vertx.base.PortInfo;
 import com.github.susom.vertx.base.Security;
 import com.github.susom.vertx.base.SecurityImpl;
@@ -29,24 +28,13 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.net.JksOptions;
 import io.vertx.ext.web.Router;
 import java.io.File;
-import java.io.FilePermission;
 import java.io.PrintStream;
-import java.lang.management.ManagementPermission;
-import java.net.SocketPermission;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.security.Permission;
 import java.security.SecureRandom;
-import java.security.SecurityPermission;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
-import java.util.PropertyPermission;
 import java.util.Set;
-import javax.management.MBeanPermission;
-import javax.management.MBeanServerPermission;
-import javax.management.MBeanTrustPermission;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,8 +65,6 @@ public class Main {
     }
     PortInfo listen = PortInfo.parseUrl(config.getString("listen.url", "http://0.0.0.0:8080"));
     String context = '/' + config.getString("app.context", "home");
-
-    enableSecurityManager();
 
     // Create the database schema if requested or we are running hsql the first time
     Set<String> argSet = new HashSet<>(Arrays.asList(args));
@@ -146,62 +132,6 @@ public class Main {
     }
   }
 
-  private Main installSecurityPolicy() throws Exception {
-    Config config = readConfig();
-    List<Permission> permissions = new ArrayList<>();
-
-    // Need access to the network interface/port to which we listen
-    PortInfo listen = PortInfo.parseUrl(config.getString("listen.url", "http://localhost:8000"));
-    permissions.add(new SocketPermission("*:" + listen.port(), "listen,resolve"));
-
-    // Configurable list of servers to which we can connect
-    String csv = config.getString("connect.outbound");
-    if (csv != null) {
-      for (String s : csv.split(",")) {
-        permissions.add(new SocketPermission(s, "connect,resolve"));
-      }
-    }
-
-    // For fake security we need to act as a client to our own embedded authentication
-    if (config.getBooleanOrFalse("insecure.fake.security")) {
-      permissions.add(new SocketPermission("localhost:" + listen.port(), "connect,resolve"));
-    }
-
-    // Connecting to centralized authentication server
-    PortInfo authServer = PortInfo.parseUrl(config.getString("auth.server.base.uri"));
-    if (authServer != null) {
-      permissions.add(new SocketPermission(authServer.host() + ":" + authServer.port(), "connect,resolve"));
-    }
-
-    // These two are for hsqldb to store its database files
-    permissions.add(new FilePermission(workDir() + "/.hsql", "read,write,delete"));
-    permissions.add(new FilePermission(workDir() + "/.hsql/-", "read,write,delete"));
-
-    // In case we are terminating SSL/TLS on the server
-    permissions.add(new FilePermission(workDir() + "/local.ssl.jks", "read"));
-
-    // Vert.x default directory for handling file uploads
-    permissions.add(new FilePermission(workDir() + "/file-uploads", "read,write"));
-
-    // The SAML implementation needs these four (xml parsing; write metadata into conf)
-    permissions.add(new FilePermission(workDir() + "/conf", "read,write"));
-    permissions.add(new FilePermission(workDir() + "/conf/-", "read,write"));
-    permissions.add(new SecurityPermission("org.apache.xml.security.register"));
-    permissions.add(new PropertyPermission("org.apache.xml.security.ignoreLineBreaks", "write"));
-
-    // Oracle JDBC driver requires these
-    Flavor flavor = Flavor.fromJdbcUrl(config.getString("database.url", "jdbc:postgresql:"));
-    if (flavor == Flavor.oracle) {
-      permissions.add(new MBeanServerPermission("createMBeanServer"));
-      permissions.add(new ManagementPermission("control"));
-      permissions.add(new MBeanPermission("*", "registerMBean"));
-      permissions.add(new MBeanTrustPermission("register"));
-    }
-
-    setSecurityPolicy(permissions.toArray(new Permission[0]));
-    return this;
-  }
-
   private Config readConfig() {
     String properties = System.getProperty("properties", "conf/app.properties" + File.pathSeparator + "local.properties" + File.pathSeparator + "sample.properties");
     return Config.from().systemProperties().propertyFile(properties.split(File.pathSeparator)).get();
@@ -212,7 +142,7 @@ public class Main {
     // might have gone wrong during log config or console redirection
     PrintStream err = System.err;
     try {
-      new Main().installSecurityPolicy().launch(args);
+      new Main().launch(args);
     } catch (Throwable t) {
       t.printStackTrace(err);
       err.println("Exiting with error code 1");
