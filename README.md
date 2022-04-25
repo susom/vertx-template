@@ -1,6 +1,6 @@
 ## Template Web Application
 
-[![Build Status](https://travis-ci.org/susom/vertx-template.svg?branch=master)](https://travis-ci.org/susom/vertx-template)
+[![Build Status](https://app.travis-ci.com/susom/vertx-template.svg?branch=master)](https://app.travis-ci.com/susom/vertx-template)
 
 An opinionated way to build APIs and API-based web applications with a relational database as the primary data store.
 
