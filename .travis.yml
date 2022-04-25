@@ -2,14 +2,9 @@ language: java
 jdk:
   - openjdk8
 
-# Skip the default mvn command because we want to set the profile explicitly
 install: skip
 script:
-  - cp .travis.settings.xml $HOME/.m2/settings.xml
-  - mvn -e -DskipTests -Dcheck1 verify
-  - mvn -e -DskipTests -Dcheck2 clean verify
-  - mvn -e clean package
-#  - mvn -e -Dpostgres.database.url=jdbc:postgresql:test -Dpostgres.database.user=test -Dpostgres.database.password=test -P postgresql test
+  - ./build test
 after_failure:
   - echo "\n=== SUREFIRE REPORTS ===\n"
   - for F in target/surefire-reports/*.txt; do echo $F; cat $F; echo; done
