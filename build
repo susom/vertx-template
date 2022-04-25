@@ -1,0 +1,18 @@
+#!/bin/bash
+
+if [ $# -ne 1 ] ; then
+  echo "Usage: $0 <command>"
+  echo ""
+  echo "Supported commands:"
+  echo "       test - clean and run all static analysis, tests, and packaging"
+  exit 1
+fi
+
+if [ "$1" = "test" ] ; then
+  echo "--- Static analysis checks phase 1 ---" && \
+  mvn -e -DskipTests -Dcheck1 clean verify && \
+  echo "--- Static analysis checks phase 2 ---" && \
+  mvn -e -DskipTests -Dcheck2 clean verify && \
+  echo "--- Test and packaging phase ---" && \
+  mvn -e clean package
+fi

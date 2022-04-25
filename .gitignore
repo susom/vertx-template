@@ -14,6 +14,7 @@ local.*
 # on your exact version, which plugins are installed, etc., so ignore everything
 # except for a vetted list of things we want. In particular, we want code
 # formatting style (which needs to match the checkstyle Maven configuration).
+*.iml
 /.idea/*
 !/.idea/codeStyleSettings.xml
 !/.idea/dataSources.ids
