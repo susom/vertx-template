@@ -1,9 +1,2 @@
-@defaultMessage Insecure: Unbounded memory consumption and allows arbitrary and unbounded file upload
-io.vertx.core.http.HttpServerRequest#bodyHandler(io.vertx.core.Handler)
-
-@defaultMessage Insecure: Risky path lookups - use StrictResourceHandler instead
-io.vertx.ext.web.handler.StaticHandler
-
-@defaultMessage Use VertxUtil.executeBlocking() instead to avoid breaking SLF4J logging of MDC
-io.vertx.core.Vertx#executeBlocking(io.vertx.core.Handler, boolean, io.vertx.core.Handler)
-io.vertx.core.Vertx#executeBlocking(io.vertx.core.Handler, io.vertx.core.Handler)
+# Add your own restrictions here. Documentation on syntax:
+# https://github.com/policeman-tools/forbidden-apis/wiki/SignaturesSyntax
