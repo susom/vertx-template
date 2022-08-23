@@ -9,7 +9,7 @@
          and a number of tools for static verification. See https://github.com/susom/vertx-parent. -->
     <groupId>com.github.susom</groupId>
     <artifactId>vertx-parent</artifactId>
-    <version>1.5</version>
+    <version>1.6</version>
   </parent>
 
   <artifactId>vertx-template</artifactId>
