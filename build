@@ -4,15 +4,22 @@ if [ $# -ne 1 ] ; then
   echo "Usage: $0 <command>"
   echo ""
   echo "Supported commands:"
-  echo "       test - clean and run all static analysis, tests, and packaging"
+  echo "       test  - clean and run all static analysis, tests, and packaging"
+  echo "       sonar - clean and run all static analysis, tests, and packaging"
+  echo "               with the SonarCloud agent"
   exit 1
 fi
 
-if [ "$1" = "test" ] ; then
+SONAR=
+if [ "$1" = "sonar" ] ; then
+  SONAR="sonar:sonar -Dsonar.projectKey=susom_vertx-template"
+fi
+
+if [ "$1" = "test" -o "$1" = "sonar" ] ; then
   echo "--- Static analysis checks phase 1 ---" && \
   mvn -e -DskipTests -Dcheck1 clean verify && \
   echo "--- Static analysis checks phase 2 ---" && \
   mvn -e -DskipTests -Dcheck2 clean verify && \
   echo "--- Test and packaging phase ---" && \
-  mvn -e clean package
+  mvn -e -Pcoverage clean package $SONAR
 fi
