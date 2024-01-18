@@ -32,9 +32,9 @@ public class MessageDao {
     this.dbs = dbs;
   }
 
-  public void addMessage(String message) {
-    dbs.get().toInsert("insert into app_message (app_message_id, message) values (?,?)")
-        .argPkSeq("app_pk_seq").argString(message).insert(1);
+  public long addMessage(String message) {
+    return dbs.get().toInsert("insert into app_message (app_message_id, message) values (?,?)")
+        .argPkSeq("app_pk_seq").argString(message).insertReturningPkSeq("app_pk_seq");
   }
 
   public Message findMessageById(Long messageId) {
