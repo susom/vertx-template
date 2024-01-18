@@ -12,6 +12,7 @@ addons:
       secure: "f7oUm0Vo58FU7VApA73LVmgeiip1M9ESex19d+RlWxCPI3fAffWR7513zCiX1B12+02NrzOqLDBlka6Ia7liQ9S7KEgHpoB19+unkqEQhWS33KRkjYL2RQ9obA22rrOQEdlggFaIZaLQY5rkijCpdtsisY3qo7/jz1k2QfVu15fFxPFD3cAjmkbXdz7A13qjdYMFydqow9vnkaQ3vndPml3Xqaztl9oswsaxKD9bbYizOawxthC3O+eklZGJO84cyUyOHmnAH0nQ1Ss1Va/Xqj7nQ+Ey5lVIw3lnGKTveVL5OtxqfTwumcSZda/yDnNWvZFWUpHNX4uZmKzJw4o0du7Y1qd2LOHV/Yj8hkcVB05aFZP+ye60m1/od4ISVTpTTx0R9HHNlbmQpTPiGH7USetbbd/q9lgsNIbW9sV8jUE6lEkA9ejkZrpIxQaVkUGogguSioH7782DObYnJ9WGzcF4D40sdqx0EHklFhBLo6kTqHNZZ3RS1Vb/j1bqVUwPUU+67PX1viogT6XyU2eYJVdk16gGezQ5LwnXLkTf0EgjM0WcGxP/1irHUWrjchuHpcg+gZeymXVxaXU+/F1cylNBlUlnR+6uuDq5jcyHrRAXlC87aBcUGC60uaomUTCYMUuxH+jXjH28JX4eNe832CbVn//yeKFj1681XTHSbUQ="
 install: skip
 script:
+  - cp sample.properties local.properties
   - mvn -Pcreate-schema -DskipTests verify && ./build sonar
 after_failure:
   - echo "\n=== SUREFIRE REPORTS ===\n"
