@@ -1,0 +1,43 @@
+name: vertx-template
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 8 * * *'  # Cron job to run daily at 8AM UTC (at midnight PDT)
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Copy sample.properties to local.properties
+        run: cp sample.properties local.properties
+
+      - name: Run Maven build
+        run: mvn -Pcreate-schema -DskipTests verify
+
+      - name: Print Surefire Reports on Failure
+        if: failure()
+        run: |
+          echo "\n=== SUREFIRE REPORTS ===\n"
+          for F in target/surefire-reports/*.txt; do
+            echo "$F"
+            cat "$F"
+            echo
+          done
